@@ -12,63 +12,58 @@ export const PreviewPanel = ({ code, type, isLoading }: PreviewPanelProps) => {
   const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
-    if (!code || !iframeRef.current) return;
+    if (!code) return;
 
     setShowPreview(false);
 
-    // Show "Preparing App Preview" for 1 second
+    // Show "Preparing App Preview" for 500ms then render
     const timer = setTimeout(() => {
-      setShowPreview(true);
+      const iframe = iframeRef.current;
+      if (!iframe) return;
       
       if (type === 'html') {
-        // Direct HTML rendering
-        const iframe = iframeRef.current;
-        if (iframe) {
-          iframe.srcdoc = code;
-        }
+        iframe.srcdoc = code;
       } else if (type === 'react') {
-        // React component rendering with Babel transpilation
-        const iframe = iframeRef.current;
-        if (iframe) {
-          const htmlTemplate = `
-            <!DOCTYPE html>
-            <html>
-              <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-                <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-                <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-                <script src="https://cdn.tailwindcss.com"></script>
-                <style>
-                  body { margin: 0; padding: 16px; font-family: system-ui, -apple-system, sans-serif; }
-                  * { box-sizing: border-box; }
-                </style>
-              </head>
-              <body>
-                <div id="root"></div>
-                <script type="text/babel">
-                  ${code}
-                  
-                  // Find the default export or the main component
-                  const Component = typeof exports !== 'undefined' && exports.default 
-                    ? exports.default 
-                    : (typeof App !== 'undefined' ? App : null);
-                  
-                  if (Component) {
-                    const root = ReactDOM.createRoot(document.getElementById('root'));
-                    root.render(React.createElement(Component));
-                  } else {
-                    document.getElementById('root').innerHTML = '<div style="padding: 20px; color: red;">Error: No component found to render</div>';
-                  }
-                </script>
-              </body>
-            </html>
-          `;
-          iframe.srcdoc = htmlTemplate;
-        }
+        const htmlTemplate = `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+              <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+              <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+              <script src="https://cdn.tailwindcss.com"></script>
+              <style>
+                body { margin: 0; padding: 16px; font-family: system-ui, -apple-system, sans-serif; }
+                * { box-sizing: border-box; }
+              </style>
+            </head>
+            <body>
+              <div id="root"></div>
+              <script type="text/babel">
+                ${code}
+                
+                // Find the default export or the main component
+                const Component = typeof exports !== 'undefined' && exports.default 
+                  ? exports.default 
+                  : (typeof App !== 'undefined' ? App : null);
+                
+                if (Component) {
+                  const root = ReactDOM.createRoot(document.getElementById('root'));
+                  root.render(React.createElement(Component));
+                } else {
+                  document.getElementById('root').innerHTML = '<div style="padding: 20px; color: red;">Error: No component found to render</div>';
+                }
+              </script>
+            </body>
+          </html>
+        `;
+        iframe.srcdoc = htmlTemplate;
       }
-    }, 1000);
+      
+      setShowPreview(true);
+    }, 500);
 
     return () => clearTimeout(timer);
   }, [code, type]);
@@ -97,14 +92,14 @@ export const PreviewPanel = ({ code, type, isLoading }: PreviewPanelProps) => {
 
   return (
     <div className="h-full bg-white">
-      {code ? (
-        <iframe
-          ref={iframeRef}
-          className="w-full h-full border-0"
-          sandbox="allow-scripts"
-          title="Preview"
-        />
-      ) : (
+      <iframe
+        ref={iframeRef}
+        className="w-full h-full border-0"
+        sandbox="allow-scripts"
+        title="Preview"
+        style={{ display: showPreview && code ? 'block' : 'none' }}
+      />
+      {!code && (
         <div className="flex items-center justify-center h-full bg-muted/20">
           <p className="text-sm text-muted-foreground">
             Your generated app will appear here
