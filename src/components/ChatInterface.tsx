@@ -3,6 +3,7 @@ import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { Send, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Message {
   role: 'user' | 'assistant' | 'status';
@@ -11,13 +12,16 @@ interface Message {
 
 interface ChatInterfaceProps {
   initialPrompt?: string;
+  onCodeGenerated: (codeData: { code: string; type: 'html' | 'react'; title: string; description: string }) => void;
+  onGeneratingStart: () => void;
 }
 
-export const ChatInterface = ({ initialPrompt }: ChatInterfaceProps) => {
+export const ChatInterface = ({ initialPrompt, onCodeGenerated, onGeneratingStart }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const conversationHistoryRef = useRef<Array<{ role: string; content: string }>>([]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -33,135 +37,58 @@ export const ChatInterface = ({ initialPrompt }: ChatInterfaceProps) => {
     }
   }, []);
 
-  const streamChat = async (messages: Message[]) => {
-    const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
-    
-    const resp = await fetch(CHAT_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-      },
-      body: JSON.stringify({ messages }),
-    });
-
-    if (!resp.ok) {
-      if (resp.status === 429) {
-        toast.error('Rate limit exceeded. Please try again later.');
-        throw new Error('Rate limit exceeded');
-      }
-      if (resp.status === 402) {
-        toast.error('Payment required. Please add credits.');
-        throw new Error('Payment required');
-      }
-      throw new Error('Failed to start stream');
-    }
-
-    if (!resp.body) throw new Error('No response body');
-
-    const reader = resp.body.getReader();
-    const decoder = new TextDecoder();
-    let textBuffer = '';
-    let streamDone = false;
-    let assistantMessage = '';
-
-    while (!streamDone) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      textBuffer += decoder.decode(value, { stream: true });
-
-      let newlineIndex: number;
-      while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
-        let line = textBuffer.slice(0, newlineIndex);
-        textBuffer = textBuffer.slice(newlineIndex + 1);
-
-        if (line.endsWith('\r')) line = line.slice(0, -1);
-        if (line.startsWith(':') || line.trim() === '') continue;
-        if (!line.startsWith('data: ')) continue;
-
-        const jsonStr = line.slice(6).trim();
-        if (jsonStr === '[DONE]') {
-          streamDone = true;
-          break;
-        }
-
-        try {
-          const parsed = JSON.parse(jsonStr);
-          const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-          if (content) {
-            assistantMessage += content;
-            setMessages(prev => {
-              const last = prev[prev.length - 1];
-              if (last?.role === 'assistant') {
-                return prev.map((m, i) => 
-                  i === prev.length - 1 ? { ...m, content: assistantMessage } : m
-                );
-              }
-              return [...prev, { role: 'assistant', content: assistantMessage }];
-            });
-          }
-        } catch {
-          textBuffer = line + '\n' + textBuffer;
-          break;
-        }
-      }
-    }
-
-    if (textBuffer.trim()) {
-      for (let raw of textBuffer.split('\n')) {
-        if (!raw) continue;
-        if (raw.endsWith('\r')) raw = raw.slice(0, -1);
-        if (raw.startsWith(':') || raw.trim() === '') continue;
-        if (!raw.startsWith('data: ')) continue;
-        const jsonStr = raw.slice(6).trim();
-        if (jsonStr === '[DONE]') continue;
-        try {
-          const parsed = JSON.parse(jsonStr);
-          const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-          if (content) {
-            assistantMessage += content;
-            setMessages(prev => {
-              const last = prev[prev.length - 1];
-              if (last?.role === 'assistant') {
-                return prev.map((m, i) => 
-                  i === prev.length - 1 ? { ...m, content: assistantMessage } : m
-                );
-              }
-              return [...prev, { role: 'assistant', content: assistantMessage }];
-            });
-          }
-        } catch {}
-      }
-    }
-  };
-
   const sendMessage = async (messageText?: string) => {
     const text = messageText || input;
-    if (!text.trim()) return;
+    if (!text.trim() || isLoading) return;
 
     const userMsg: Message = { role: 'user', content: text };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsLoading(true);
+    onGeneratingStart();
 
     // Add "Working On Task" status
     setMessages(prev => [...prev, { role: 'status', content: 'Working On Task' }]);
 
     try {
-      await streamChat([...messages.filter(m => m.role !== 'status'), userMsg]);
-      
-      // Remove status and add "Preparing App Preview" for 1 second
+      // Generate code using the new edge function
+      const { data, error } = await supabase.functions.invoke('generate-code', {
+        body: { 
+          prompt: text,
+          conversationHistory: conversationHistoryRef.current
+        }
+      });
+
+      if (error) throw error;
+
+      // Remove status message
       setMessages(prev => prev.filter(m => m.role !== 'status'));
-      setMessages(prev => [...prev, { role: 'status', content: 'Preparing App Preview' }]);
-      
-      setTimeout(() => {
-        setMessages(prev => prev.filter(m => m.role !== 'status'));
-      }, 1000);
-      
+
+      // Add assistant response
+      const assistantMsg: Message = {
+        role: 'assistant',
+        content: `Created: ${data.title}\n${data.description}`
+      };
+      setMessages(prev => [...prev, assistantMsg]);
+
+      // Update conversation history
+      conversationHistoryRef.current.push(
+        { role: 'user', content: text },
+        { role: 'assistant', content: `Generated ${data.type} code: ${data.title}` }
+      );
+
+      // Trigger code display
+      onCodeGenerated({
+        code: data.code,
+        type: data.type,
+        title: data.title,
+        description: data.description
+      });
+
     } catch (e) {
       console.error(e);
       setMessages(prev => prev.filter(m => m.role !== 'status'));
-      toast.error('Failed to send message');
+      toast.error('Failed to generate code');
     } finally {
       setIsLoading(false);
     }
@@ -172,8 +99,8 @@ export const ChatInterface = ({ initialPrompt }: ChatInterfaceProps) => {
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && (
           <div className="text-center text-muted-foreground py-8">
-            <h3 className="text-lg font-semibold mb-2">Start a conversation</h3>
-            <p>Ask Cortex anything to get started</p>
+            <h3 className="text-lg font-semibold mb-2">Start building</h3>
+            <p>Describe what you want to create</p>
           </div>
         )}
         {messages.map((msg, idx) => (
@@ -213,7 +140,7 @@ export const ChatInterface = ({ initialPrompt }: ChatInterfaceProps) => {
                 sendMessage();
               }
             }}
-            placeholder="Type your message..."
+            placeholder="Describe what you want to build..."
             className="min-h-[60px] resize-none"
             disabled={isLoading}
           />
