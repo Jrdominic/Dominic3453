@@ -2,6 +2,7 @@ import { Plus, Paperclip, Palette, Mic, ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
+import sLogo from "@/assets/s-logo.png";
 
 const Index = () => {
   const [inputValue, setInputValue] = useState("");
@@ -12,7 +13,7 @@ const Index = () => {
       <header className="flex items-center justify-between px-6 py-4 border-b border-border">
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2">
-            <span className="text-2xl">🧡</span>
+            <img src={sLogo} alt="Logo" className="h-8 w-8" />
             <span className="text-xl font-semibold text-foreground">Lovable</span>
           </div>
           <nav className="hidden md:flex items-center gap-6">
@@ -55,7 +56,7 @@ const Index = () => {
           {/* Heading */}
           <div className="space-y-4">
             <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl">
-              Build something <span className="inline-block">🧡</span> Lovable
+              Build something <img src={sLogo} alt="Logo" className="inline-block h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 lg:h-20 lg:w-20 align-middle" /> Lovable
             </h1>
             <p className="text-lg text-muted-foreground md:text-xl">
               Create apps and websites by chatting with AI
