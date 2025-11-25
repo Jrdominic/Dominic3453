@@ -13,13 +13,15 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/`
+        redirectTo: `${window.location.origin}/chat`
       }
     });
     
     if (error) {
       toast.error("Failed to sign in with Google");
-      console.error(error);
+      if (import.meta.env.DEV) {
+        console.error(error);
+      }
     }
   };
 
@@ -27,13 +29,15 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'github',
       options: {
-        redirectTo: `${window.location.origin}/`
+        redirectTo: `${window.location.origin}/chat`
       }
     });
     
     if (error) {
       toast.error("Failed to sign in with GitHub");
-      console.error(error);
+      if (import.meta.env.DEV) {
+        console.error(error);
+      }
     }
   };
 
