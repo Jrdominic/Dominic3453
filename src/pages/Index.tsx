@@ -60,13 +60,13 @@ const Index = () => {
             <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl whitespace-nowrap animate-float">
               Build something <img src={sLogo} alt="Logo" className="inline-block h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 lg:h-20 lg:w-20 align-middle mx-2 sm:mx-3 md:mx-4" /> Cortex
             </h1>
-            <p className="text-lg text-muted-foreground md:text-xl animate-float-slow">
+            <p className="text-lg text-muted-foreground md:text-xl animate-float">
               Create apps and websites by chatting with AI
             </p>
           </div>
 
           {/* Input Box */}
-          <div className="mx-auto w-full max-w-2xl animate-fade-in animate-float" style={{ animationDelay: "0.4s" }}>
+          <div className="mx-auto w-full max-w-2xl animate-fade-in animate-float">
             <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-lg transition-all hover:border-border/60 focus-within:border-primary/50 hover:shadow-xl hover:-translate-y-1">
               <Button
                 variant="ghost"
