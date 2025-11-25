@@ -10,7 +10,7 @@ const Index = () => {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       {/* Header */}
-      <header className="flex items-center justify-between px-6 py-4 border-b border-border">
+      <header className="flex items-center justify-center px-6 py-4 border-b border-border">
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2">
             <img src={sLogo} alt="Logo" className="h-8 w-8" />
@@ -30,14 +30,14 @@ const Index = () => {
               Community
             </button>
           </nav>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" className="text-sm">
-            Log in
-          </Button>
-          <Button className="bg-foreground text-background hover:bg-foreground/90 text-sm">
-            Get started
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" className="text-sm">
+              Log in
+            </Button>
+            <Button className="bg-foreground text-background hover:bg-foreground/90 text-sm">
+              Get started
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -122,14 +122,11 @@ const Index = () => {
       {/* Community Section */}
       <section className="border-t border-border px-6 py-12">
         <div className="mx-auto max-w-7xl">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-center mb-8">
             <h2 className="text-2xl font-semibold text-foreground">From the Community</h2>
-            <Button variant="ghost" className="text-sm text-muted-foreground hover:text-foreground">
-              View all <span className="ml-1">→</span>
-            </Button>
           </div>
           
-          <div className="flex gap-3 mb-6 overflow-x-auto pb-2">
+          <div className="flex gap-3 mb-6 overflow-x-auto pb-2 justify-center">
             {["Featured", "Discover", "Internal Tools", "Website", "Personal", "Consumer App", "B2B App", "Prototype"].map((tab) => (
               <button
                 key={tab}
