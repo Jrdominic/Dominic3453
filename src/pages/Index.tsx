@@ -18,8 +18,8 @@ const Index = () => {
   useEffect(() => {
     const targetPrice = isYearly ? 192 : 20;
     const startPrice = proPrice;
-    const duration = 800;
-    const steps = 30;
+    const duration = 1500;
+    const steps = 40;
     const increment = (targetPrice - startPrice) / steps;
     let currentStep = 0;
 
@@ -269,15 +269,9 @@ const Index = () => {
               </Badge>
               <h3 className="text-2xl font-bold text-foreground mb-2">Pro</h3>
               <div className="mb-6 h-16 flex items-baseline">
-                <motion.span
-                  key={proPrice}
-                  initial={{ filter: "blur(8px)" }}
-                  animate={{ filter: "blur(0px)" }}
-                  transition={{ duration: 0.1 }}
-                  className="text-5xl font-bold text-foreground"
-                >
+                <span className="text-5xl font-bold text-foreground">
                   ${proPrice}
-                </motion.span>
+                </span>
                 <span className="text-muted-foreground ml-2">/{isYearly ? 'year' : 'month'}</span>
               </div>
               <ul className="space-y-3 mb-8 flex-1">
