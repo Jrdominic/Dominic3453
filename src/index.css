@@ -20,6 +20,9 @@ All colors MUST be HSL.
     --primary: 17 100% 62%;
     --primary-foreground: 0 0% 100%;
 
+    --purple: 270 80% 60%;
+    --purple-light: 270 70% 70%;
+
     --secondary: 0 0% 10%;
     --secondary-foreground: 0 0% 100%;
 
@@ -67,6 +70,9 @@ All colors MUST be HSL.
 
     --primary: 17 100% 62%;
     --primary-foreground: 0 0% 100%;
+
+    --purple: 270 80% 60%;
+    --purple-light: 270 70% 70%;
 
     --secondary: 0 0% 10%;
     --secondary-foreground: 0 0% 100%;

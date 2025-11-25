@@ -3,14 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import sLogo from "@/assets/s-logo.png";
+import AnimatedBackground from "@/components/AnimatedBackground";
 
 const Index = () => {
   const [inputValue, setInputValue] = useState("");
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col bg-background relative">
+      <AnimatedBackground />
       {/* Header */}
-      <header className="flex items-center justify-center px-6 py-4 border-b border-border">
+      <header className="flex items-center justify-center px-6 py-4 border-b border-border relative z-10">
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2">
             <img src={sLogo} alt="Logo" className="h-8 w-8" />
@@ -42,7 +44,7 @@ const Index = () => {
       </header>
 
       {/* Hero Section */}
-      <main className="flex flex-1 flex-col items-center justify-center px-4 py-16">
+      <main className="flex flex-1 flex-col items-center justify-center px-4 py-16 relative z-10">
         <div className="w-full max-w-3xl space-y-8 text-center">
           {/* Badge */}
           <div className="flex justify-center">
@@ -55,16 +57,16 @@ const Index = () => {
 
           {/* Heading */}
           <div className="space-y-4 animate-fade-in">
-            <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl whitespace-nowrap">
+            <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl whitespace-nowrap animate-float">
               Build something <img src={sLogo} alt="Logo" className="inline-block h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 lg:h-20 lg:w-20 align-middle mx-2 sm:mx-3 md:mx-4" /> Cortex
             </h1>
-            <p className="text-lg text-muted-foreground md:text-xl">
+            <p className="text-lg text-muted-foreground md:text-xl animate-float-slow">
               Create apps and websites by chatting with AI
             </p>
           </div>
 
           {/* Input Box */}
-          <div className="mx-auto w-full max-w-2xl animate-fade-in" style={{ animationDelay: "0.2s", animationFillMode: "backwards" }}>
+          <div className="mx-auto w-full max-w-2xl animate-fade-in animate-float" style={{ animationDelay: "0.4s" }}>
             <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-lg transition-all hover:border-border/60 focus-within:border-primary/50 hover:shadow-xl hover:-translate-y-1">
               <Button
                 variant="ghost"
@@ -120,7 +122,7 @@ const Index = () => {
       </main>
 
       {/* Community Section */}
-      <section className="border-t border-border px-6 py-12">
+      <section className="border-t border-border px-6 py-12 relative z-10">
         <div className="mx-auto max-w-7xl">
           <div className="flex items-center justify-center mb-8">
             <h2 className="text-2xl font-semibold text-foreground">From the Community</h2>
