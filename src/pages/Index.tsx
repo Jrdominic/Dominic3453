@@ -118,61 +118,8 @@ const Index = () => {
               </div>
             </div>
           </div>
-
-          {/* Cortex Text */}
-          <div className="mt-8 animate-fade-in animate-float">
-            <h2 className="text-3xl font-bold gradient-cortex sm:text-4xl md:text-5xl">
-              Cortex
-            </h2>
-          </div>
         </div>
       </main>
-
-      {/* Community Section */}
-      <section className="border-t border-border px-6 py-12 relative z-10">
-        <div className="mx-auto max-w-7xl">
-          <div className="flex items-center justify-center mb-8">
-            <h2 className="text-2xl font-semibold text-foreground">From the Community</h2>
-          </div>
-          
-          <div className="flex gap-3 mb-6 overflow-x-auto pb-2 justify-center">
-            {["Featured", "Discover", "Internal Tools", "Website", "Personal", "Consumer App", "B2B App", "Prototype"].map((tab) => (
-              <button
-                key={tab}
-                className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm transition-colors ${
-                  tab === "Featured"
-                    ? "bg-muted text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map((item) => (
-              <div
-                key={item}
-                className="group cursor-pointer rounded-xl border border-border bg-card overflow-hidden transition-all hover:border-border/60"
-              >
-                <div className="aspect-video bg-gradient-to-br from-muted to-muted/50" />
-                <div className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="h-6 w-6 rounded-full bg-primary" />
-                    <span className="text-sm text-muted-foreground">Project Name</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>Website</span>
-                    <span>•</span>
-                    <span>24 Remixes</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
     </div>
   );
 };
