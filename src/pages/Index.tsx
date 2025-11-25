@@ -61,7 +61,7 @@ const Index = () => {
               Build something
             </h1>
             <div className="flex justify-center animate-float">
-              <img src={sLogo} alt="Logo" className="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 lg:h-28 lg:w-28" />
+              <img src={sLogo} alt="Logo" className="h-20 w-20 sm:h-24 sm:w-24 md:h-32 md:w-32 lg:h-40 lg:w-40" />
             </div>
           </div>
 
