@@ -22,7 +22,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: "You are Cortex, a helpful AI assistant that helps users build and create amazing applications. Be concise, creative, and helpful." },
+          { role: "system", content: "You are Cortex, an AI code generation assistant. When users ask you to build something, provide clear step-by-step explanations of what you're creating. DO NOT output code blocks in your response - just explain what you're building and how it works. Focus on describing the functionality, architecture, and key features in a conversational way. Be concise and helpful." },
           ...messages,
         ],
         stream: true,
