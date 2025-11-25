@@ -16,7 +16,7 @@ const Index = () => {
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2">
             <img src={sLogo} alt="Logo" className="h-8 w-8" />
-            <span className="text-xl font-semibold text-foreground">Lovable</span>
+            <span className="text-xl font-semibold gradient-cortex">Cortex</span>
           </div>
           <nav className="hidden md:flex items-center gap-6">
             <button className="text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -58,7 +58,7 @@ const Index = () => {
           {/* Heading */}
           <div className="space-y-4 animate-fade-in">
             <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl whitespace-nowrap animate-float">
-              Build something <img src={sLogo} alt="Logo" className="inline-block h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 lg:h-20 lg:w-20 align-middle mx-2 sm:mx-3 md:mx-4" /> Cortex
+              Build something <img src={sLogo} alt="Logo" className="inline-block h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 lg:h-20 lg:w-20 align-middle mx-2 sm:mx-3 md:mx-4" /> <span className="gradient-cortex">Cortex</span>
             </h1>
             <p className="text-lg text-muted-foreground md:text-xl animate-float">
               Create apps and websites by chatting with AI
@@ -80,7 +80,7 @@ const Index = () => {
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Ask Lovable to create a blog about..."
+                placeholder="Ask Cortex to create a blog about..."
                 className="flex-1 bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
               />
 
