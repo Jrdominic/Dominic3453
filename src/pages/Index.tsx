@@ -19,7 +19,7 @@ const Index = () => {
     const targetPrice = isYearly ? 192 : 20;
     const startPrice = proPrice;
     const duration = 1500;
-    const steps = 40;
+    const steps = 80;
     const increment = (targetPrice - startPrice) / steps;
     let currentStep = 0;
 
