@@ -1,17 +1,23 @@
-import { Plus, Paperclip, Palette, Mic, ArrowUp, Check } from "lucide-react";
+import { Check, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import sLogo from "@/assets/s-logo.png";
 import AnimatedBackground from "@/components/AnimatedBackground";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { motion } from "framer-motion";
+import { GenerationChat } from "@/components/GenerationChat";
+import { useAuth } from "@/contexts/AuthContext";
+import { useCredits } from "@/hooks/useCredits";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
-  const [inputValue, setInputValue] = useState("");
   const [isYearly, setIsYearly] = useState(false);
   const [proPrice, setProPrice] = useState(20);
+  const { user, signOut } = useAuth();
+  const { credits } = useCredits();
+  const navigate = useNavigate();
   const { ref: howItWorksRef, isVisible: howItWorksVisible } = useScrollAnimation();
   const { ref: pricingRef, isVisible: pricingVisible } = useScrollAnimation();
 
@@ -40,106 +46,96 @@ const Index = () => {
     <div className="flex min-h-screen flex-col bg-background relative">
       <AnimatedBackground />
       {/* Header */}
-      <header className="flex items-center justify-center px-6 py-4 border-b border-border relative z-10">
-        <div className="flex items-center gap-8">
-          <div className="flex items-center gap-2">
-            <img src={sLogo} alt="Logo" className="h-8 w-8" />
-            <span className="text-xl font-semibold gradient-cortex">Cortex</span>
-          </div>
-          <nav className="hidden md:flex items-center gap-6">
-            <button 
-              onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Pricing
-            </button>
-          </nav>
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" className="text-sm">
-              Log in
-            </Button>
-            <Button className="bg-foreground text-background hover:bg-foreground/90 text-sm">
-              Get started
-            </Button>
-          </div>
+      <header className="flex items-center justify-between px-6 py-4 border-b border-border relative z-10 max-w-7xl mx-auto w-full">
+        <div className="flex items-center gap-2">
+          <img src={sLogo} alt="Logo" className="h-8 w-8" />
+          <span className="text-xl font-semibold gradient-cortex">Cortex</span>
+        </div>
+        
+        <nav className="hidden md:flex items-center gap-6">
+          <button 
+            onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Pricing
+          </button>
+        </nav>
+        
+        <div className="flex items-center gap-4">
+          {user ? (
+            <>
+              {credits && (
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-muted-foreground">Credits:</span>
+                  <span className="font-bold text-primary">{credits.credits_remaining}/{credits.daily_credits}</span>
+                </div>
+              )}
+              <Button variant="ghost" size="icon" title="Profile">
+                <User className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={signOut} title="Logout">
+                <LogOut className="h-5 w-5" />
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" onClick={() => navigate('/auth')}>
+                Log in
+              </Button>
+              <Button onClick={() => navigate('/auth')}>Get Started</Button>
+            </>
+          )}
         </div>
       </header>
 
       {/* Hero Section */}
       <main className="flex flex-1 flex-col items-center justify-center px-4 py-16 relative z-10">
-        <div className="w-full max-w-3xl space-y-8 text-center">
+        <div className="w-full max-w-4xl space-y-8 text-center">
           {/* Badge */}
-          <div className="flex justify-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex justify-center"
+          >
             <Badge className="gap-2 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 px-3 py-1">
               <span className="text-xs font-medium">New</span>
-              <span className="text-xs">Themes & Visual edits</span>
+              <span className="text-xs">AI-Powered App Generation</span>
               <span>→</span>
             </Badge>
-          </div>
+          </motion.div>
 
           {/* Heading */}
-          <div className="space-y-6 animate-fade-in">
-            <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl animate-float">
-              Build something
-            </h1>
-            <div className="flex justify-center animate-float">
-              <img src={sLogo} alt="Logo" className="h-20 w-20 sm:h-24 sm:w-24 md:h-32 md:w-32 lg:h-40 lg:w-40" />
-            </div>
-          </div>
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-6xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent"
+          >
+            Generate apps with
+            <br />
+            just a prompt
+          </motion.h1>
 
-          {/* Input Box */}
-          <div className="mx-auto w-full max-w-2xl animate-fade-in animate-float">
-            <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-lg transition-all hover:border-border/60 focus-within:border-primary/50 hover:shadow-xl hover:-translate-y-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground hover:bg-transparent"
-              >
-                <Plus className="h-5 w-5" />
-              </Button>
-
-              <input
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Ask Cortex to create a blog about..."
-                className="flex-1 bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
-              />
-
-              <div className="flex items-center gap-2 shrink-0">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-transparent"
-                >
-                  <Paperclip className="h-5 w-5" />
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-transparent"
-                >
-                  <Palette className="h-5 w-5" />
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-transparent"
-                >
-                  <Mic className="h-5 w-5" />
-                </Button>
-
-                <Button
-                  size="icon"
-                  className="h-9 w-9 rounded-full bg-muted text-foreground hover:bg-muted/80"
-                >
-                  <ArrowUp className="h-5 w-5" />
+          {/* Chat Interface or CTA */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="w-full"
+          >
+            {!user ? (
+              <div className="space-y-6">
+                <p className="text-xl text-muted-foreground">
+                  Sign in to start generating AI-powered apps
+                </p>
+                <Button size="lg" onClick={() => navigate('/auth')} className="text-lg px-8 py-6">
+                  Get Started Free - 4 Credits Daily
                 </Button>
               </div>
-            </div>
-          </div>
+            ) : (
+              <GenerationChat />
+            )}
+          </motion.div>
         </div>
       </main>
 
@@ -161,11 +157,11 @@ const Index = () => {
               </div>
               <h3 className="text-xl font-semibold text-foreground">Describe</h3>
               <p className="text-muted-foreground">
-                Tell the AI what features you want in plain English.
+                Tell the AI what app you want to build in plain English.
               </p>
             </div>
 
-            {/* Card 2 - AI Modifies Code */}
+            {/* Card 2 - AI Generates */}
             <div className={`rounded-2xl border border-border bg-card p-8 flex flex-col items-center text-center space-y-4 transition-all duration-700 hover:scale-105 hover:shadow-2xl hover:border-purple/50 ${howItWorksVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
               <div className="text-purple text-5xl">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -175,13 +171,13 @@ const Index = () => {
                   <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path>
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-foreground">AI Modifies Code</h3>
+              <h3 className="text-xl font-semibold text-foreground">AI Generates</h3>
               <p className="text-muted-foreground">
-                The AI instantly writes and modifies your project's codebase.
+                Our AI instantly creates your complete app with working code.
               </p>
             </div>
 
-            {/* Card 3 - Preview & Export */}
+            {/* Card 3 - Deploy */}
             <div className={`rounded-2xl border border-border bg-card p-8 flex flex-col items-center text-center space-y-4 transition-all duration-700 hover:scale-105 hover:shadow-2xl hover:border-primary/50 ${howItWorksVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
               <div className="text-primary text-5xl">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -189,9 +185,9 @@ const Index = () => {
                   <circle cx="12" cy="12" r="3"></circle>
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-foreground">Preview & Export</h3>
+              <h3 className="text-xl font-semibold text-foreground">Preview & Deploy</h3>
               <p className="text-muted-foreground">
-                See live changes, then export your complete project.
+                See live changes instantly, then deploy your app to the world.
               </p>
             </div>
           </div>
@@ -242,7 +238,7 @@ const Index = () => {
               <ul className="space-y-3 mb-8 flex-1">
                 <li className="flex items-start gap-2">
                   <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                  <span className="text-muted-foreground">5 daily credits</span>
+                  <span className="text-muted-foreground">4 daily credits</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
@@ -257,13 +253,16 @@ const Index = () => {
                   <span className="text-muted-foreground">Public projects</span>
                 </li>
               </ul>
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full" onClick={() => navigate('/auth')}>
                 Get started
               </Button>
             </div>
 
             {/* Pro Tier */}
             <div className={`rounded-2xl border-2 border-primary bg-card p-8 flex flex-col relative transition-all duration-700 hover:scale-105 hover:shadow-2xl ${pricingVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+              <div className="absolute top-4 right-4 bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-sm font-bold z-20">
+                50% OFF
+              </div>
               <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground">
                 Popular
               </Badge>
@@ -277,7 +276,7 @@ const Index = () => {
               <ul className="space-y-3 mb-8 flex-1">
                 <li className="flex items-start gap-2">
                   <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                  <span className="text-muted-foreground">100 monthly credits</span>
+                  <span className="text-muted-foreground">Unlimited credits</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
@@ -312,7 +311,7 @@ const Index = () => {
       <footer className="border-t border-border px-6 py-8 relative z-10">
         <div className="mx-auto max-w-7xl flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
-            © 2025 SlushCortex. All rights reserved.
+            © 2025 Cortex. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
             <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
