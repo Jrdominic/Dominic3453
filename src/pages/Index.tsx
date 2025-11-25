@@ -2,17 +2,39 @@ import { Plus, Paperclip, Palette, Mic, ArrowUp, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import sLogo from "@/assets/s-logo.png";
 import AnimatedBackground from "@/components/AnimatedBackground";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 const Index = () => {
   const [inputValue, setInputValue] = useState("");
   const [isYearly, setIsYearly] = useState(false);
+  const [proPrice, setProPrice] = useState(20);
   const { ref: howItWorksRef, isVisible: howItWorksVisible } = useScrollAnimation();
   const { ref: pricingRef, isVisible: pricingVisible } = useScrollAnimation();
+
+  useEffect(() => {
+    const targetPrice = isYearly ? 192 : 20;
+    const startPrice = proPrice;
+    const duration = 800;
+    const steps = 30;
+    const increment = (targetPrice - startPrice) / steps;
+    let currentStep = 0;
+
+    const timer = setInterval(() => {
+      currentStep++;
+      if (currentStep >= steps) {
+        setProPrice(targetPrice);
+        clearInterval(timer);
+      } else {
+        setProPrice(Math.round(startPrice + increment * currentStep));
+      }
+    }, duration / steps);
+
+    return () => clearInterval(timer);
+  }, [isYearly]);
 
   return (
     <div className="flex min-h-screen flex-col bg-background relative">
@@ -212,18 +234,9 @@ const Index = () => {
             <div className={`rounded-2xl border border-border bg-card p-8 flex flex-col transition-all duration-700 hover:scale-105 hover:shadow-2xl hover:border-border/60 ${pricingVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
               <h3 className="text-2xl font-bold text-foreground mb-2">Free</h3>
               <div className="mb-6 h-16 flex items-baseline">
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={`free-${isYearly}`}
-                    initial={{ opacity: 0, filter: "blur(10px)", scale: 0.8 }}
-                    animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
-                    exit={{ opacity: 0, filter: "blur(10px)", scale: 0.8 }}
-                    transition={{ duration: 0.4 }}
-                    className="text-5xl font-bold text-foreground"
-                  >
-                    $0
-                  </motion.span>
-                </AnimatePresence>
+                <span className="text-5xl font-bold text-foreground">
+                  $0
+                </span>
                 <span className="text-muted-foreground ml-2">/{isYearly ? 'year' : 'month'}</span>
               </div>
               <ul className="space-y-3 mb-8 flex-1">
@@ -256,18 +269,15 @@ const Index = () => {
               </Badge>
               <h3 className="text-2xl font-bold text-foreground mb-2">Pro</h3>
               <div className="mb-6 h-16 flex items-baseline">
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={`pro-${isYearly}`}
-                    initial={{ opacity: 0, filter: "blur(10px)", scale: 0.8 }}
-                    animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
-                    exit={{ opacity: 0, filter: "blur(10px)", scale: 0.8 }}
-                    transition={{ duration: 0.4 }}
-                    className="text-5xl font-bold text-foreground"
-                  >
-                    ${isYearly ? '192' : '20'}
-                  </motion.span>
-                </AnimatePresence>
+                <motion.span
+                  key={proPrice}
+                  initial={{ filter: "blur(8px)" }}
+                  animate={{ filter: "blur(0px)" }}
+                  transition={{ duration: 0.1 }}
+                  className="text-5xl font-bold text-foreground"
+                >
+                  ${proPrice}
+                </motion.span>
                 <span className="text-muted-foreground ml-2">/{isYearly ? 'year' : 'month'}</span>
               </div>
               <ul className="space-y-3 mb-8 flex-1">
