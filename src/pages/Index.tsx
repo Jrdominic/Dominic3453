@@ -117,28 +117,28 @@ const Index = () => {
       {/* How it works Section */}
       <section ref={howItWorksRef} className="border-t border-border px-6 py-16 relative z-10">
         <div className="mx-auto max-w-7xl">
-          <h2 className={`text-4xl font-bold text-center text-foreground mb-12 animate-float transition-all duration-700 ${howItWorksVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          <h2 className={`text-4xl font-bold text-center text-foreground mb-12 transition-all duration-700 ${howItWorksVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
             How it works
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Card 1 - Describe */}
-            <div className={`rounded-2xl border border-border bg-card p-8 flex flex-col items-center text-center space-y-4 transition-all duration-700 hover:scale-105 hover:shadow-2xl hover:border-primary/50 animate-float ${howItWorksVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-              <div className="text-primary text-5xl animate-float">
+            <div className={`rounded-2xl border border-border bg-card p-8 flex flex-col items-center text-center space-y-4 transition-all duration-700 hover:scale-105 hover:shadow-2xl hover:border-primary/50 ${howItWorksVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+              <div className="text-primary text-5xl">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="16 18 22 12 16 6"></polyline>
                   <polyline points="8 6 2 12 8 18"></polyline>
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-foreground animate-float">Describe</h3>
-              <p className="text-muted-foreground animate-float">
+              <h3 className="text-xl font-semibold text-foreground">Describe</h3>
+              <p className="text-muted-foreground">
                 Tell the AI what features you want in plain English.
               </p>
             </div>
 
             {/* Card 2 - AI Modifies Code */}
-            <div className={`rounded-2xl border border-border bg-card p-8 flex flex-col items-center text-center space-y-4 transition-all duration-700 delay-150 hover:scale-105 hover:shadow-2xl hover:border-purple/50 animate-float ${howItWorksVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-              <div className="text-purple text-5xl animate-float">
+            <div className={`rounded-2xl border border-border bg-card p-8 flex flex-col items-center text-center space-y-4 transition-all duration-700 hover:scale-105 hover:shadow-2xl hover:border-purple/50 ${howItWorksVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+              <div className="text-purple text-5xl">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path>
                   <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path>
@@ -146,22 +146,22 @@ const Index = () => {
                   <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path>
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-foreground animate-float">AI Modifies Code</h3>
-              <p className="text-muted-foreground animate-float">
+              <h3 className="text-xl font-semibold text-foreground">AI Modifies Code</h3>
+              <p className="text-muted-foreground">
                 The AI instantly writes and modifies your project's codebase.
               </p>
             </div>
 
             {/* Card 3 - Preview & Export */}
-            <div className={`rounded-2xl border border-border bg-card p-8 flex flex-col items-center text-center space-y-4 transition-all duration-700 delay-300 hover:scale-105 hover:shadow-2xl hover:border-primary/50 animate-float ${howItWorksVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-              <div className="text-primary text-5xl animate-float">
+            <div className={`rounded-2xl border border-border bg-card p-8 flex flex-col items-center text-center space-y-4 transition-all duration-700 hover:scale-105 hover:shadow-2xl hover:border-primary/50 ${howItWorksVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+              <div className="text-primary text-5xl">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
                   <circle cx="12" cy="12" r="3"></circle>
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-foreground animate-float">Preview & Export</h3>
-              <p className="text-muted-foreground animate-float">
+              <h3 className="text-xl font-semibold text-foreground">Preview & Export</h3>
+              <p className="text-muted-foreground">
                 See live changes, then export your complete project.
               </p>
             </div>
