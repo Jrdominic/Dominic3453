@@ -55,10 +55,8 @@ const Index = () => {
 
           {/* Heading */}
           <div className="space-y-4 animate-fade-in">
-            <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl flex items-center justify-center gap-2 sm:gap-3 md:gap-4">
-              <span>Build something</span>
-              <img src={sLogo} alt="Logo" className="inline-block h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 lg:h-20 lg:w-20" />
-              <span>Lovable</span>
+            <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl whitespace-nowrap">
+              Build something <img src={sLogo} alt="Logo" className="inline-block h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 lg:h-20 lg:w-20 align-middle mx-2 sm:mx-3 md:mx-4" /> Cortex
             </h1>
             <p className="text-lg text-muted-foreground md:text-xl">
               Create apps and websites by chatting with AI
