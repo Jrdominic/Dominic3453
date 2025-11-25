@@ -54,8 +54,8 @@ const Index = () => {
           </div>
 
           {/* Heading */}
-          <div className="space-y-4">
-            <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl flex items-center justify-center gap-2 sm:gap-3 md:gap-4 flex-wrap">
+          <div className="space-y-4 animate-fade-in">
+            <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl flex items-center justify-center gap-2 sm:gap-3 md:gap-4">
               <span>Build something</span>
               <img src={sLogo} alt="Logo" className="inline-block h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 lg:h-20 lg:w-20" />
               <span>Lovable</span>
@@ -66,8 +66,8 @@ const Index = () => {
           </div>
 
           {/* Input Box */}
-          <div className="mx-auto w-full max-w-2xl">
-            <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-lg transition-all hover:border-border/60 focus-within:border-primary/50">
+          <div className="mx-auto w-full max-w-2xl animate-fade-in" style={{ animationDelay: "0.2s", animationFillMode: "backwards" }}>
+            <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-lg transition-all hover:border-border/60 focus-within:border-primary/50 hover:shadow-xl hover:-translate-y-1">
               <Button
                 variant="ghost"
                 size="icon"
