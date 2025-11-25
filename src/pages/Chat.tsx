@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { ChatInterface } from '@/components/ChatInterface';
+import { CodePanel } from '@/components/CodePanel';
+import { PreviewPanel } from '@/components/PreviewPanel';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 
@@ -10,6 +12,8 @@ const Chat = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [initialPrompt] = useState<string | undefined>(location.state?.prompt);
+  const [generatedCode, setGeneratedCode] = useState({ code: '', type: 'html' as 'html' | 'react', title: '', description: '' });
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -28,6 +32,15 @@ const Chat = () => {
     return fullName.split(' ')[0];
   };
 
+  const handleCodeGenerated = (codeData: { code: string; type: 'html' | 'react'; title: string; description: string }) => {
+    setGeneratedCode(codeData);
+    setIsGenerating(false);
+  };
+
+  const handleGeneratingStart = () => {
+    setIsGenerating(true);
+  };
+
   if (isLoading) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -37,6 +50,8 @@ const Chat = () => {
   }
 
   if (!user) return null;
+
+  const language = generatedCode.type === 'react' ? 'tsx' : 'markup';
 
   return (
     <div className="h-screen flex flex-col">
@@ -55,37 +70,19 @@ const Chat = () => {
 
       <div className="flex-1 flex overflow-hidden">
         <div className="w-1/3 border-r">
-          <ChatInterface initialPrompt={initialPrompt} />
+          <ChatInterface 
+            initialPrompt={initialPrompt} 
+            onCodeGenerated={handleCodeGenerated}
+            onGeneratingStart={handleGeneratingStart}
+          />
         </div>
         
-        <div className="w-1/3 border-r bg-muted/30">
-          <div className="h-full flex flex-col">
-            <div className="border-b p-4 bg-background/50">
-              <h2 className="text-lg font-semibold">Preview</h2>
-            </div>
-            <div className="flex-1 flex items-center justify-center p-8">
-              <div className="text-center">
-                <p className="text-muted-foreground">
-                  Your generated app will appear here
-                </p>
-              </div>
-            </div>
-          </div>
+        <div className="w-1/3 border-r">
+          <PreviewPanel code={generatedCode.code} type={generatedCode.type} isLoading={isGenerating} />
         </div>
 
-        <div className="w-1/3 bg-muted/20">
-          <div className="h-full flex flex-col">
-            <div className="border-b p-4 bg-background/50">
-              <h2 className="text-lg font-semibold">Code</h2>
-            </div>
-            <div className="flex-1 flex items-center justify-center p-8">
-              <div className="text-center">
-                <p className="text-muted-foreground">
-                  Generated code will appear here
-                </p>
-              </div>
-            </div>
-          </div>
+        <div className="w-1/3">
+          <CodePanel code={generatedCode.code} language={language} title={generatedCode.title} />
         </div>
       </div>
     </div>
@@ -93,3 +90,4 @@ const Chat = () => {
 };
 
 export default Chat;
+
