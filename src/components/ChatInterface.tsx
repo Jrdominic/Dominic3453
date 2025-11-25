@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
-import { Send } from 'lucide-react';
+import { Send, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Message {
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'status';
   content: string;
 }
 
@@ -144,10 +144,23 @@ export const ChatInterface = ({ initialPrompt }: ChatInterfaceProps) => {
     setInput('');
     setIsLoading(true);
 
+    // Add "Working On Task" status
+    setMessages(prev => [...prev, { role: 'status', content: 'Working On Task' }]);
+
     try {
-      await streamChat([...messages, userMsg]);
+      await streamChat([...messages.filter(m => m.role !== 'status'), userMsg]);
+      
+      // Remove status and add "Preparing App Preview" for 1 second
+      setMessages(prev => prev.filter(m => m.role !== 'status'));
+      setMessages(prev => [...prev, { role: 'status', content: 'Preparing App Preview' }]);
+      
+      setTimeout(() => {
+        setMessages(prev => prev.filter(m => m.role !== 'status'));
+      }, 1000);
+      
     } catch (e) {
       console.error(e);
+      setMessages(prev => prev.filter(m => m.role !== 'status'));
       toast.error('Failed to send message');
     } finally {
       setIsLoading(false);
@@ -166,15 +179,22 @@ export const ChatInterface = ({ initialPrompt }: ChatInterfaceProps) => {
         {messages.map((msg, idx) => (
           <div
             key={idx}
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            className={`flex ${
+              msg.role === 'user' ? 'justify-end' : 
+              msg.role === 'status' ? 'justify-center' : 
+              'justify-start'
+            }`}
           >
             <div
               className={`max-w-[80%] rounded-lg px-4 py-2 ${
                 msg.role === 'user'
                   ? 'bg-primary text-primary-foreground'
+                  : msg.role === 'status'
+                  ? 'bg-accent/20 text-accent-foreground flex items-center gap-2'
                   : 'bg-muted text-foreground'
               }`}
             >
+              {msg.role === 'status' && <Loader2 className="h-4 w-4 animate-spin" />}
               <p className="whitespace-pre-wrap">{msg.content}</p>
             </div>
           </div>

@@ -54,17 +54,36 @@ const Chat = () => {
       </header>
 
       <div className="flex-1 flex overflow-hidden">
-        <div className="w-1/2 border-r">
+        <div className="w-1/3 border-r">
           <ChatInterface initialPrompt={initialPrompt} />
         </div>
         
-        <div className="w-1/2 bg-muted/30">
-          <div className="h-full flex items-center justify-center p-8">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold mb-4">App Preview</h2>
-              <p className="text-muted-foreground">
-                Your generated app will appear here
-              </p>
+        <div className="w-1/3 border-r bg-muted/30">
+          <div className="h-full flex flex-col">
+            <div className="border-b p-4 bg-background/50">
+              <h2 className="text-lg font-semibold">Preview</h2>
+            </div>
+            <div className="flex-1 flex items-center justify-center p-8">
+              <div className="text-center">
+                <p className="text-muted-foreground">
+                  Your generated app will appear here
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="w-1/3 bg-muted/20">
+          <div className="h-full flex flex-col">
+            <div className="border-b p-4 bg-background/50">
+              <h2 className="text-lg font-semibold">Code</h2>
+            </div>
+            <div className="flex-1 flex items-center justify-center p-8">
+              <div className="text-center">
+                <p className="text-muted-foreground">
+                  Generated code will appear here
+                </p>
+              </div>
             </div>
           </div>
         </div>
