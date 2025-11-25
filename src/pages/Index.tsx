@@ -56,13 +56,13 @@ const Index = () => {
           </div>
 
           {/* Heading */}
-          <div className="space-y-4 animate-fade-in">
-            <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl whitespace-nowrap animate-float">
-              Build something <img src={sLogo} alt="Logo" className="inline-block h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 lg:h-20 lg:w-20 align-middle mx-2 sm:mx-3 md:mx-4" /> <span className="gradient-cortex">Cortex</span>
+          <div className="space-y-6 animate-fade-in">
+            <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl animate-float">
+              Build something
             </h1>
-            <p className="text-lg text-muted-foreground md:text-xl animate-float">
-              Create apps and websites by chatting with AI
-            </p>
+            <div className="flex justify-center animate-float">
+              <img src={sLogo} alt="Logo" className="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 lg:h-28 lg:w-28" />
+            </div>
           </div>
 
           {/* Input Box */}
@@ -117,6 +117,13 @@ const Index = () => {
                 </Button>
               </div>
             </div>
+          </div>
+
+          {/* Cortex Text */}
+          <div className="mt-8 animate-fade-in animate-float">
+            <h2 className="text-3xl font-bold gradient-cortex sm:text-4xl md:text-5xl">
+              Cortex
+            </h2>
           </div>
         </div>
       </main>
