@@ -91,7 +91,7 @@ export const CodePanel = ({ code, language, title, fileName = 'index.html' }: Co
           </Button>
         </div>
         <div className="flex-1 overflow-auto">
-          <pre className="!m-0 !rounded-none h-full">
+          <pre className="!m-0 !rounded-none h-full" style={{ fontSize: '11px', lineHeight: '1.4' }}>
             <code ref={codeRef} className={`language-${language}`}>
               {code}
             </code>
