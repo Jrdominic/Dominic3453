@@ -5,7 +5,8 @@ import { ChatInterface } from '@/components/ChatInterface';
 import { CodePanel } from '@/components/CodePanel';
 import { PreviewPanel } from '@/components/PreviewPanel';
 import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { LogOut, Monitor, Code } from 'lucide-react';
 
 const Chat = () => {
   const { user, isLoading, signOut } = useAuth();
@@ -14,6 +15,7 @@ const Chat = () => {
   const [initialPrompt] = useState<string | undefined>(location.state?.prompt);
   const [generatedCode, setGeneratedCode] = useState({ code: '', type: 'html' as 'html' | 'react', title: '', description: '' });
   const [isGenerating, setIsGenerating] = useState(false);
+  const [activeTab, setActiveTab] = useState('preview');
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -35,6 +37,8 @@ const Chat = () => {
   const handleCodeGenerated = (codeData: { code: string; type: 'html' | 'react'; title: string; description: string }) => {
     setGeneratedCode(codeData);
     setIsGenerating(false);
+    // Automatically switch to preview when code is generated
+    setActiveTab('preview');
   };
 
   const handleGeneratingStart = () => {
@@ -69,7 +73,8 @@ const Chat = () => {
       </header>
 
       <div className="flex-1 flex overflow-hidden">
-        <div className="w-1/3 border-r">
+        {/* Chat Panel - Fixed Left Side */}
+        <div className="w-[400px] border-r flex-shrink-0">
           <ChatInterface 
             initialPrompt={initialPrompt} 
             onCodeGenerated={handleCodeGenerated}
@@ -77,12 +82,35 @@ const Chat = () => {
           />
         </div>
         
-        <div className="w-1/3 border-r">
-          <PreviewPanel code={generatedCode.code} type={generatedCode.type} isLoading={isGenerating} />
-        </div>
-
-        <div className="w-1/3">
-          <CodePanel code={generatedCode.code} language={language} title={generatedCode.title} />
+        {/* Main Content Area with Tabs */}
+        <div className="flex-1 flex flex-col">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+            <div className="border-b px-4">
+              <TabsList className="h-12 bg-transparent">
+                <TabsTrigger value="preview" className="gap-2">
+                  <Monitor className="h-4 w-4" />
+                  Preview
+                </TabsTrigger>
+                <TabsTrigger value="code" className="gap-2">
+                  <Code className="h-4 w-4" />
+                  Code
+                </TabsTrigger>
+              </TabsList>
+            </div>
+            
+            <TabsContent value="preview" className="flex-1 m-0 overflow-hidden">
+              <PreviewPanel code={generatedCode.code} type={generatedCode.type} isLoading={isGenerating} />
+            </TabsContent>
+            
+            <TabsContent value="code" className="flex-1 m-0 overflow-hidden">
+              <CodePanel 
+                code={generatedCode.code} 
+                language={language} 
+                title={generatedCode.title}
+                fileName={generatedCode.type === 'react' ? 'App.tsx' : 'index.html'}
+              />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>
@@ -90,4 +118,3 @@ const Chat = () => {
 };
 
 export default Chat;
-

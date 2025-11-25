@@ -75,15 +75,10 @@ export const PreviewPanel = ({ code, type, isLoading }: PreviewPanelProps) => {
 
   if (isLoading) {
     return (
-      <div className="h-full flex flex-col">
-        <div className="border-b border-border/50 px-4 py-3 bg-background/50">
-          <h2 className="text-lg font-semibold">Preview</h2>
-        </div>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
-            <p className="text-sm text-muted-foreground">Working On Task</p>
-          </div>
+      <div className="h-full flex items-center justify-center bg-muted/20">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
+          <p className="text-sm text-muted-foreground">Working On Task</p>
         </div>
       </div>
     );
@@ -91,41 +86,31 @@ export const PreviewPanel = ({ code, type, isLoading }: PreviewPanelProps) => {
 
   if (!showPreview && code) {
     return (
-      <div className="h-full flex flex-col">
-        <div className="border-b border-border/50 px-4 py-3 bg-background/50">
-          <h2 className="text-lg font-semibold">Preview</h2>
-        </div>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
-            <p className="text-sm text-muted-foreground">Preparing App Preview</p>
-          </div>
+      <div className="h-full flex items-center justify-center bg-muted/20">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
+          <p className="text-sm text-muted-foreground">Preparing App Preview</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="border-b border-border/50 px-4 py-3 bg-background/50">
-        <h2 className="text-lg font-semibold">Preview</h2>
-      </div>
-      <div className="flex-1 overflow-auto bg-white">
-        {code ? (
-          <iframe
-            ref={iframeRef}
-            className="w-full h-full border-0"
-            sandbox="allow-scripts"
-            title="Preview"
-          />
-        ) : (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-sm text-muted-foreground">
-              Your generated app will appear here
-            </p>
-          </div>
-        )}
-      </div>
+    <div className="h-full bg-white">
+      {code ? (
+        <iframe
+          ref={iframeRef}
+          className="w-full h-full border-0"
+          sandbox="allow-scripts"
+          title="Preview"
+        />
+      ) : (
+        <div className="flex items-center justify-center h-full bg-muted/20">
+          <p className="text-sm text-muted-foreground">
+            Your generated app will appear here
+          </p>
+        </div>
+      )}
     </div>
   );
 };
