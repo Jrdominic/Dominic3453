@@ -117,7 +117,7 @@ const Index = () => {
       {/* How it works Section */}
       <section ref={howItWorksRef} className="border-t border-border px-6 py-16 relative z-10">
         <div className="mx-auto max-w-7xl">
-          <h2 className={`text-4xl font-bold text-center text-foreground mb-12 animate-float transition-all duration-700 ${howItWorksVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          <h2 className={`text-4xl font-bold text-center text-foreground mb-12 transition-opacity duration-700 ${howItWorksVisible ? 'opacity-100 animate-float' : 'opacity-0'}`}>
             How it works
           </h2>
           
