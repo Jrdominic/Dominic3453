@@ -25,7 +25,10 @@ const Index = () => {
             <span className="text-xl font-semibold gradient-cortex">Cortex</span>
           </div>
           <nav className="hidden md:flex items-center gap-6">
-            <button className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <button 
+              onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
               Pricing
             </button>
           </nav>
@@ -174,7 +177,7 @@ const Index = () => {
       </section>
 
       {/* Pricing Section */}
-      <section ref={pricingRef} className="px-6 py-16 relative z-10">
+      <section id="pricing" ref={pricingRef} className="px-6 py-16 relative z-10">
         <div className="mx-auto max-w-7xl">
           <h2 className={`text-4xl font-bold text-center text-foreground mb-4 transition-opacity duration-700 ${pricingVisible ? 'opacity-100' : 'opacity-0'}`}>
             Simple, transparent pricing
