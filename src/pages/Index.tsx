@@ -1,21 +1,42 @@
-import { Plus, Paperclip, Palette, Mic, ArrowUp } from "lucide-react";
+import { Plus, Paperclip, Palette, Mic, ArrowUp, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import sLogo from "@/assets/s-logo.png";
 import AnimatedBackground from "@/components/AnimatedBackground";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { AuthDialog } from "@/components/AuthDialog";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 const Index = () => {
   const [inputValue, setInputValue] = useState("");
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const { ref: howItWorksRef, isVisible: howItWorksVisible } = useScrollAnimation();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const handleSendClick = () => {
-    if (inputValue.trim()) {
+    if (!inputValue.trim()) {
+      toast.error('Please enter a prompt');
+      return;
+    }
+    if (user) {
+      navigate('/chat', { state: { prompt: inputValue } });
+    } else {
       setAuthDialogOpen(true);
     }
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
+  const getUserFirstName = () => {
+    if (!user) return '';
+    const fullName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+    return fullName.split(' ')[0];
   };
 
   return (
@@ -34,12 +55,24 @@ const Index = () => {
             </button>
           </nav>
           <div className="flex items-center gap-3">
-            <Button variant="ghost" className="text-sm">
-              Log in
-            </Button>
-            <Button className="bg-foreground text-background hover:bg-foreground/90 text-sm">
-              Get started
-            </Button>
+            {user ? (
+              <>
+                <span className="text-sm font-medium">{getUserFirstName()}'s Cortex</span>
+                <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" className="text-sm" onClick={() => setAuthDialogOpen(true)}>
+                  Log in
+                </Button>
+                <Button className="bg-foreground text-background hover:bg-foreground/90 text-sm" onClick={() => setAuthDialogOpen(true)}>
+                  Get started
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </header>
