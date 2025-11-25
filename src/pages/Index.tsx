@@ -55,8 +55,10 @@ const Index = () => {
 
           {/* Heading */}
           <div className="space-y-4">
-            <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl">
-              Build something <img src={sLogo} alt="Logo" className="inline-block h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 lg:h-20 lg:w-20 align-middle" /> Lovable
+            <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl flex items-center justify-center gap-2 sm:gap-3 md:gap-4 flex-wrap">
+              <span>Build something</span>
+              <img src={sLogo} alt="Logo" className="inline-block h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 lg:h-20 lg:w-20" />
+              <span>Lovable</span>
             </h1>
             <p className="text-lg text-muted-foreground md:text-xl">
               Create apps and websites by chatting with AI
