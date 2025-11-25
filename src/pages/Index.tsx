@@ -5,10 +5,18 @@ import { useState } from "react";
 import sLogo from "@/assets/s-logo.png";
 import AnimatedBackground from "@/components/AnimatedBackground";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
+import { AuthDialog } from "@/components/AuthDialog";
 
 const Index = () => {
   const [inputValue, setInputValue] = useState("");
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const { ref: howItWorksRef, isVisible: howItWorksVisible } = useScrollAnimation();
+
+  const handleSendClick = () => {
+    if (inputValue.trim()) {
+      setAuthDialogOpen(true);
+    }
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-background relative">
@@ -104,6 +112,7 @@ const Index = () => {
 
                 <Button
                   size="icon"
+                  onClick={handleSendClick}
                   className="h-9 w-9 rounded-full bg-muted text-foreground hover:bg-muted/80"
                 >
                   <ArrowUp className="h-5 w-5" />
@@ -188,6 +197,8 @@ const Index = () => {
           </div>
         </div>
       </footer>
+
+      <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
     </div>
   );
 };
