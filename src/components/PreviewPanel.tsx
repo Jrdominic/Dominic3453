@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface PreviewPanelProps {
   code: string;
@@ -9,6 +10,11 @@ interface PreviewPanelProps {
 
 export const PreviewPanel = ({ code, type, isLoading }: PreviewPanelProps) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const handleRefresh = () => {
+    setRefreshKey(prev => prev + 1);
+  };
 
   useEffect(() => {
     if (!code) return;
@@ -67,7 +73,7 @@ export const PreviewPanel = ({ code, type, isLoading }: PreviewPanelProps) => {
       `;
       iframe.srcdoc = htmlTemplate;
     }
-  }, [code, type]);
+  }, [code, type, refreshKey]);
 
   if (isLoading) {
     return (
@@ -81,7 +87,18 @@ export const PreviewPanel = ({ code, type, isLoading }: PreviewPanelProps) => {
   }
 
   return (
-    <div className="h-full bg-white">
+    <div className="h-full bg-white relative">
+      {code && (
+        <Button
+          onClick={handleRefresh}
+          size="sm"
+          variant="outline"
+          className="absolute top-4 right-4 z-10 shadow-lg"
+          title="Refresh preview"
+        >
+          <RefreshCw className="h-4 w-4" />
+        </Button>
+      )}
       <iframe
         ref={iframeRef}
         className="w-full h-full border-0"
