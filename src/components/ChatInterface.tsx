@@ -1,19 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
-import { Send, Loader2 } from 'lucide-react';
+import { Send, Loader2, X } from 'lucide-react'; // Added X icon for removing image
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Message {
   role: 'user' | 'assistant' | 'status';
   content: string;
-  image?: string; // Added image field
+  image?: string;
 }
 
 interface ChatInterfaceProps {
   initialPrompt?: string;
-  initialImage?: string; // Added initialImage prop
+  initialImage?: string;
   onCodeGenerated: (codeData: { code: string; type: 'html' | 'react'; title: string; description: string }) => void;
   onGeneratingStart: () => void;
   fixErrorsPrompt?: string | null;
@@ -25,7 +25,9 @@ export const ChatInterface = ({ initialPrompt, initialImage, onCodeGenerated, on
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const conversationHistoryRef = useRef<Array<{ role: string; content: string; image?: string }>>([]); // Updated history type
+  const conversationHistoryRef = useRef<Array<{ role: string; content: string; image?: string }>>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null); // Added ref for file input
+  const [selectedImage, setSelectedImage] = useState<string | null>(null); // State for selected/pasted image
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -37,13 +39,13 @@ export const ChatInterface = ({ initialPrompt, initialImage, onCodeGenerated, on
 
   useEffect(() => {
     if (initialPrompt || initialImage) {
+      setSelectedImage(initialImage || null); // Set initial image if provided
       sendMessage(initialPrompt, initialImage);
     }
-  }, [initialPrompt, initialImage]); // Depend on initialImage as well
+  }, [initialPrompt, initialImage]);
 
   useEffect(() => {
     if (fixErrorsPrompt) {
-      // Add "Fixing Errors" status message
       setMessages(prev => [...prev, { role: 'status', content: 'Fixing Errors' }]);
       setTimeout(() => {
         sendMessage(fixErrorsPrompt);
@@ -54,46 +56,43 @@ export const ChatInterface = ({ initialPrompt, initialImage, onCodeGenerated, on
 
   const sendMessage = async (messageText?: string, imageToSend?: string) => {
     const text = messageText || input;
-    if ((!text.trim() && !imageToSend) || isLoading) return;
+    const currentImage = imageToSend || selectedImage; // Use currentImage or selectedImage
 
-    const userMsg: Message = { role: 'user', content: text, ...(imageToSend && { image: imageToSend }) };
+    if ((!text.trim() && !currentImage) || isLoading) return;
+
+    const userMsg: Message = { role: 'user', content: text, ...(currentImage && { image: currentImage }) };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
+    setSelectedImage(null); // Clear selected image after sending
     setIsLoading(true);
     onGeneratingStart();
 
-    // Add "Working On Task" status
     setMessages(prev => [...prev, { role: 'status', content: 'Working On Task' }]);
 
     try {
-      // Generate code using the new edge function
       const { data, error } = await supabase.functions.invoke('generate-code', {
         body: { 
           prompt: text,
           conversationHistory: conversationHistoryRef.current,
-          image: imageToSend // Pass image data to the edge function
+          image: currentImage
         }
       });
 
       if (error) throw error;
 
-      // Remove status message
       setMessages(prev => prev.filter(m => m.role !== 'status'));
 
-      // Add assistant response
       const assistantMsg: Message = {
         role: 'assistant',
         content: `Created: ${data.title}\n${data.description}`
       };
       setMessages(prev => [...prev, assistantMsg]);
 
-      // Update conversation history
       conversationHistoryRef.current.push(
-        { role: 'user', content: text, ...(imageToSend && { image: imageToSend }) },
+        { role: 'user', content: text, ...(currentImage && { image: currentImage }) },
         { role: 'assistant', content: `Generated ${data.type} code: ${data.title}` }
       );
 
-      // Trigger code display
       onCodeGenerated({
         code: data.code,
         type: data.type,
@@ -108,6 +107,45 @@ export const ChatInterface = ({ initialPrompt, initialImage, onCodeGenerated, on
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      readImageFile(file);
+    }
+  };
+
+  const handlePaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = event.clipboardData?.items;
+    if (items) {
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const file = items[i].getAsFile();
+          if (file) {
+            readImageFile(file);
+            event.preventDefault(); // Prevent default paste behavior for image
+            return;
+          }
+        }
+      }
+    }
+  };
+
+  const readImageFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setSelectedImage(reader.result as string);
+      if (!input.includes('[Image Attached]')) {
+        setInput(prev => prev ? `[Image Attached] ${prev}` : '[Image Attached]');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeSelectedImage = () => {
+    setSelectedImage(null);
+    setInput(prev => prev.replace('[Image Attached]', '').trim());
   };
 
   return (
@@ -149,6 +187,14 @@ export const ChatInterface = ({ initialPrompt, initialImage, onCodeGenerated, on
       </div>
       
       <div className="border-t p-4">
+        {selectedImage && (
+          <div className="relative mb-4 p-2 border rounded-md bg-muted flex items-center justify-between">
+            <img src={selectedImage} alt="Pasted" className="max-h-24 rounded-md object-contain" />
+            <Button variant="ghost" size="icon" onClick={removeSelectedImage} className="absolute top-1 right-1 h-6 w-6 text-muted-foreground hover:text-foreground">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
         <div className="flex gap-2">
           <Textarea
             value={input}
@@ -159,13 +205,14 @@ export const ChatInterface = ({ initialPrompt, initialImage, onCodeGenerated, on
                 sendMessage();
               }
             }}
+            onPaste={handlePaste} // Add paste event listener
             placeholder="Describe what you want to build..."
             className="min-h-[60px] resize-none"
             disabled={isLoading}
           />
           <Button
             onClick={() => sendMessage()}
-            disabled={isLoading || (!input.trim() && !initialImage)} // Disable if no text and no initial image
+            disabled={isLoading || (!input.trim() && !selectedImage)}
             size="icon"
             className="h-[60px] w-[60px]"
           >
