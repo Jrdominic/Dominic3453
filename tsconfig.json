@@ -27,6 +27,5 @@
     }
   },
   "include": ["src", "serverless-functions"],
-  "references": [{ "path": "./tsconfig.node.json" }],
-  "exclude": ["supabase"]
+  "references": [{ "path": "./tsconfig.node.json" }]
 }
