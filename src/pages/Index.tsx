@@ -1,20 +1,20 @@
-import { Plus, Paperclip, Palette, Mic, ArrowUp } from "lucide-react";
+import { Plus, Paperclip, Palette, Mic, ArrowUp, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import sLogo from "@/assets/s-logo.png";
 import AnimatedBackground from "@/components/AnimatedBackground";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
+import { AuthDialog } from "@/components/AuthDialog";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { useGuestUser } from "@/hooks/useGuestUser";
-import { Input } from "@/components/ui/input"; // Import Input component
 
 const Index = () => {
   const [inputValue, setInputValue] = useState("");
-  const [tempUserName, setTempUserName] = useState(""); // For the initial name input
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const { ref: howItWorksRef, isVisible: howItWorksVisible } = useScrollAnimation();
-  const { userName, setGuestUserName, isFirstVisit, isLoading: isGuestLoading } = useGuestUser();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
   const handleSendClick = () => {
@@ -22,24 +22,22 @@ const Index = () => {
       toast.error('Please enter a prompt');
       return;
     }
-    navigate('/chat', { state: { prompt: inputValue } });
-  };
-
-  const handleNameSubmit = () => {
-    if (!tempUserName.trim()) {
-      toast.error('Please enter your name');
-      return;
+    if (user) {
+      navigate('/chat', { state: { prompt: inputValue } });
+    } else {
+      setAuthDialogOpen(true);
     }
-    setGuestUserName(tempUserName);
   };
 
-  if (isGuestLoading) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    );
-  }
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
+  const getUserFirstName = () => {
+    if (!user) return '';
+    const fullName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+    return fullName.split(' ')[0];
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-background relative">
@@ -57,8 +55,23 @@ const Index = () => {
             </button>
           </nav>
           <div className="flex items-center gap-3">
-            {userName && (
-              <span className="text-sm font-medium">{userName}'s Cortex</span>
+            {user ? (
+              <>
+                <span className="text-sm font-medium">{getUserFirstName()}'s Cortex</span>
+                <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" className="text-sm" onClick={() => setAuthDialogOpen(true)}>
+                  Log in
+                </Button>
+                <Button className="bg-foreground text-background hover:bg-foreground/90 text-sm" onClick={() => setAuthDialogOpen(true)}>
+                  Get started
+                </Button>
+              </>
             )}
           </div>
         </div>
@@ -86,82 +99,60 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Name Input or Main Input Box */}
-          {!userName && isFirstVisit ? (
-            <div className="mx-auto w-full max-w-md animate-fade-in">
-              <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-lg">
-                <Input
-                  type="text"
-                  value={tempUserName}
-                  onChange={(e) => setTempUserName(e.target.value)}
-                  placeholder="Enter your name to get started..."
-                  className="flex-1 bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none border-none focus-visible:ring-0"
-                  onKeyDown={(e) => e.key === 'Enter' && handleNameSubmit()}
-                />
+          {/* Input Box */}
+          <div className="mx-auto w-full max-w-2xl animate-fade-in animate-float">
+            <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-lg transition-all hover:border-border/60 focus-within:border-primary/50 hover:shadow-xl hover:-translate-y-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground hover:bg-transparent"
+              >
+                <Plus className="h-5 w-5" />
+              </Button>
+
+              <input
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                placeholder="Ask Cortex to create a blog about..."
+                className="flex-1 bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
+              />
+
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-transparent"
+                >
+                  <Paperclip className="h-5 w-5" />
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-transparent"
+                >
+                  <Palette className="h-5 w-5" />
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-transparent"
+                >
+                  <Mic className="h-5 w-5" />
+                </Button>
+
                 <Button
                   size="icon"
-                  onClick={handleNameSubmit}
+                  onClick={handleSendClick}
                   className="h-9 w-9 rounded-full bg-muted text-foreground hover:bg-muted/80"
                 >
                   <ArrowUp className="h-5 w-5" />
                 </Button>
               </div>
             </div>
-          ) : (
-            <div className="mx-auto w-full max-w-2xl animate-fade-in animate-float">
-              <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-lg transition-all hover:border-border/60 focus-within:border-primary/50 hover:shadow-xl hover:-translate-y-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground hover:bg-transparent"
-                >
-                  <Plus className="h-5 w-5" />
-                </Button>
-
-                <input
-                  type="text"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  placeholder="Ask Cortex to create a blog about..."
-                  className="flex-1 bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
-                />
-
-                <div className="flex items-center gap-2 shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-transparent"
-                  >
-                    <Paperclip className="h-5 w-5" />
-                  </Button>
-
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-transparent"
-                  >
-                    <Palette className="h-5 w-5" />
-                  </Button>
-
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-transparent"
-                  >
-                    <Mic className="h-5 w-5" />
-                  </Button>
-
-                  <Button
-                    size="icon"
-                    onClick={handleSendClick}
-                    className="h-9 w-9 rounded-full bg-muted text-foreground hover:bg-muted/80"
-                  >
-                    <ArrowUp className="h-5 w-5" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
       </main>
 
@@ -239,6 +230,8 @@ const Index = () => {
           </div>
         </div>
       </footer>
+
+      <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
     </div>
   );
 };
