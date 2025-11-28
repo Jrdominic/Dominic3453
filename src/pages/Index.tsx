@@ -1,4 +1,4 @@
-import { Plus, Paperclip, Palette, Mic, ArrowUp } from "lucide-react";
+import { Plus, Paperclip, Palette, Mic, ArrowUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect, useRef } from "react";
@@ -42,16 +42,43 @@ const Index = () => {
     fileInputRef.current?.click();
   };
 
+  const readImageFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setSelectedImage(reader.result as string);
+      if (!inputValue.includes('[Image Attached]')) {
+        setInputValue(prev => prev ? `[Image Attached] ${prev}` : '[Image Attached]');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSelectedImage(reader.result as string);
-        setInputValue(prev => prev ? `[Image Attached] ${prev}` : '[Image Attached]');
-      };
-      reader.readAsDataURL(file);
+      readImageFile(file);
     }
+  };
+
+  const handlePaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
+    const items = event.clipboardData?.items;
+    if (items) {
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const file = items[i].getAsFile();
+          if (file) {
+            readImageFile(file);
+            event.preventDefault(); // Prevent default paste behavior for image
+            return;
+          }
+        }
+      }
+    }
+  };
+
+  const removeSelectedImage = () => {
+    setSelectedImage(null);
+    setInputValue(prev => prev.replace('[Image Attached]', '').trim());
   };
 
   const getUserFirstName = () => {
@@ -127,6 +154,14 @@ const Index = () => {
           </div>
 
           <div className="mx-auto w-full max-w-2xl animate-fade-in animate-float">
+            {selectedImage && (
+              <div className="relative mb-4 p-2 border rounded-md bg-muted flex items-center justify-between">
+                <img src={selectedImage} alt="Pasted" className="max-h-24 rounded-md object-contain" />
+                <Button variant="ghost" size="icon" onClick={removeSelectedImage} className="absolute top-1 right-1 h-6 w-6 text-muted-foreground hover:text-foreground">
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
             <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-lg transition-all hover:border-border/60 focus-within:border-primary/50 hover:shadow-xl hover:-translate-y-1">
               <Button
                 variant="ghost"
@@ -146,6 +181,7 @@ const Index = () => {
                     handleSendClick();
                   }
                 }}
+                onPaste={handlePaste}
                 placeholder="Ask Cortex to create a blog about..."
                 className="flex-1 bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
               />
