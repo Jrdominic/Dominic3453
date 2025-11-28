@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { useMockAuth } from '@/hooks/useMockAuth'; // Use mock auth
 import { ChatInterface } from '@/components/ChatInterface';
 import { CodePanel } from '@/components/CodePanel';
 import { PreviewPanel } from '@/components/PreviewPanel';
@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Monitor, Code } from 'lucide-react';
 
 const Chat = () => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, signOut } = useMockAuth(); // Use mock auth
   const navigate = useNavigate();
   const location = useLocation();
   const [initialPrompt] = useState<string | undefined>(location.state?.prompt);
@@ -66,7 +66,9 @@ const Chat = () => {
             <img src="/src/assets/cortex-logo.png" alt="Cortex" className="h-8 w-8" />
             <span className="text-xl font-bold">{getUserFirstName()}'s Cortex</span>
           </div>
-          {/* Sign Out button removed */}
+          <Button variant="ghost" size="sm" onClick={signOut}>
+            Sign Out
+          </Button>
         </div>
       </header>
 

@@ -7,7 +7,7 @@ import sLogo from "@/assets/s-logo.png";
 import AnimatedBackground from "@/components/AnimatedBackground";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { AuthDialog } from "@/components/AuthDialog";
-import { useAuth } from "@/hooks/useAuth";
+import { useMockAuth } from "@/hooks/useMockAuth"; // Use mock auth
 import { toast } from "sonner";
 
 const Index = () => {
@@ -15,7 +15,7 @@ const Index = () => {
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [isSignUpMode, setIsSignUpMode] = useState(true);
   const { ref: howItWorksRef, isVisible: howItWorksVisible } = useScrollAnimation();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, signOut } = useMockAuth(); // Use mock auth
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -76,7 +76,6 @@ const Index = () => {
 
   const removeSelectedImage = () => {
     setSelectedImage(null);
-    // No need to modify inputValue here as '[Image Attached]' is no longer added
   };
 
   const getUserFirstName = () => {
@@ -104,7 +103,9 @@ const Index = () => {
           {user ? (
             <>
               <span className="text-sm font-medium">{getUserFirstName()}'s Cortex</span>
-              {/* Sign Out button removed */}
+              <Button variant="ghost" size="sm" onClick={signOut}>
+                Sign Out
+              </Button>
             </>
           ) : (
             <>

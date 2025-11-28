@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
-import { Send, Loader2, X } from 'lucide-react'; // Added X icon for removing image
+import { Send, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { generateCode } from '@/utils/aiApi'; // Import the new AI API utility
 
 interface Message {
   role: 'user' | 'assistant' | 'status';
@@ -26,8 +26,8 @@ export const ChatInterface = ({ initialPrompt, initialImage, onCodeGenerated, on
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const conversationHistoryRef = useRef<Array<{ role: string; content: string; image?: string }>>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null); // Added ref for file input
-  const [selectedImage, setSelectedImage] = useState<string | null>(null); // State for selected/pasted image
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -39,7 +39,7 @@ export const ChatInterface = ({ initialPrompt, initialImage, onCodeGenerated, on
 
   useEffect(() => {
     if (initialPrompt || initialImage) {
-      setSelectedImage(initialImage || null); // Set initial image if provided
+      setSelectedImage(initialImage || null);
       sendMessage(initialPrompt, initialImage);
     }
   }, [initialPrompt, initialImage]);
@@ -56,29 +56,25 @@ export const ChatInterface = ({ initialPrompt, initialImage, onCodeGenerated, on
 
   const sendMessage = async (messageText?: string, imageToSend?: string) => {
     const text = messageText || input;
-    const currentImage = imageToSend || selectedImage; // Use currentImage or selectedImage
+    const currentImage = imageToSend || selectedImage;
 
     if ((!text.trim() && !currentImage) || isLoading) return;
 
     const userMsg: Message = { role: 'user', content: text, ...(currentImage && { image: currentImage }) };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
-    setSelectedImage(null); // Clear selected image after sending
+    setSelectedImage(null);
     setIsLoading(true);
     onGeneratingStart();
 
     setMessages(prev => [...prev, { role: 'status', content: 'Working On Task' }]);
 
     try {
-      const { data, error } = await supabase.functions.invoke('generate-code', {
-        body: { 
-          prompt: text,
-          conversationHistory: conversationHistoryRef.current,
-          image: currentImage
-        }
+      const data = await generateCode({ // Use the new generateCode utility
+        prompt: text,
+        conversationHistory: conversationHistoryRef.current,
+        image: currentImage
       });
-
-      if (error) throw error;
 
       setMessages(prev => prev.filter(m => m.role !== 'status'));
 
@@ -100,10 +96,10 @@ export const ChatInterface = ({ initialPrompt, initialImage, onCodeGenerated, on
         description: data.description
       });
 
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
       setMessages(prev => prev.filter(m => m.role !== 'status'));
-      toast.error('Failed to generate code');
+      toast.error(e.message || 'Failed to generate code');
     } finally {
       setIsLoading(false);
     }
@@ -124,7 +120,7 @@ export const ChatInterface = ({ initialPrompt, initialImage, onCodeGenerated, on
           const file = items[i].getAsFile();
           if (file) {
             readImageFile(file);
-            event.preventDefault(); // Prevent default paste behavior for image
+            event.preventDefault();
             return;
           }
         }
@@ -143,7 +139,6 @@ export const ChatInterface = ({ initialPrompt, initialImage, onCodeGenerated, on
 
   const removeSelectedImage = () => {
     setSelectedImage(null);
-    // No need to modify input here as '[Image Attached]' is no longer added
   };
 
   return (
@@ -203,7 +198,7 @@ export const ChatInterface = ({ initialPrompt, initialImage, onCodeGenerated, on
                 sendMessage();
               }
             }}
-            onPaste={handlePaste} // Add paste event listener
+            onPaste={handlePaste}
             placeholder="Describe what you want to build..."
             className="min-h-[60px] resize-none"
             disabled={isLoading}

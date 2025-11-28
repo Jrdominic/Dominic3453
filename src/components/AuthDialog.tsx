@@ -4,9 +4,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
+import { useMockAuth } from "@/hooks/useMockAuth"; // Use mock auth
 
 interface AuthDialogProps {
   open: boolean;
@@ -19,6 +19,7 @@ export const AuthDialog = ({ open, onOpenChange, initialIsSignUp = true }: AuthD
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(initialIsSignUp);
   const [isLoading, setIsLoading] = useState(false);
+  const { signIn, signUp } = useMockAuth(); // Get mock auth functions
 
   useEffect(() => {
     setIsSignUp(initialIsSignUp);
@@ -37,40 +38,19 @@ export const AuthDialog = ({ open, onOpenChange, initialIsSignUp = true }: AuthD
 
     setIsLoading(true);
 
+    let authResult;
     if (isSignUp) {
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-      
-      if (signUpError) {
-        toast.error(signUpError.message);
+      authResult = signUp(email, password);
+      if (authResult.error) {
+        toast.error(authResult.error.message);
       } else {
-        if (signUpData.session) {
-          toast.success("Account created and signed in successfully!");
-          onOpenChange(false);
-        } else {
-          const { error: signInError } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
-
-          if (signInError) {
-            toast.error(`Account created, but failed to sign in: ${signInError.message}`);
-          } else {
-            toast.success("Account created and signed in successfully!");
-            onOpenChange(false);
-          }
-        }
+        toast.success("Account created and signed in successfully!");
+        onOpenChange(false);
       }
     } else {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      
-      if (error) {
-        toast.error(error.message);
+      authResult = signIn(email, password);
+      if (authResult.error) {
+        toast.error(authResult.error.message);
       } else {
         toast.success("Signed in successfully!");
         onOpenChange(false);
