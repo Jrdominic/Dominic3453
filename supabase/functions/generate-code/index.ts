@@ -13,11 +13,9 @@ serve(async (req) => {
 
   try {
     const { prompt, conversationHistory, image } = await req.json(); // Receive image data
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
-    }
+    // You might still need an API key for your own AI, if so, store it as a Supabase Edge Function secret.
+    // const MY_AI_API_KEY = Deno.env.get('MY_AI_API_KEY'); 
+    // if (!MY_AI_API_KEY) throw new Error("MY_AI_API_KEY is not configured");
 
     const systemPrompt = `You are Cortex, an expert code generation AI. Generate complete, working, production-ready code based on user requests.
 
@@ -82,40 +80,39 @@ Example for React (NO exports!):
     console.log('Generating code for prompt:', prompt);
     console.log('Messages sent to AI:', JSON.stringify(aiMessages, null, 2));
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    // --- START CUSTOM AI INTEGRATION ---
+    // IMPORTANT: Replace 'YOUR_CUSTOM_AI_ENDPOINT_URL' with the actual URL of your AI service.
+    // If your AI requires an API key, uncomment the MY_AI_API_KEY lines above and add it to Supabase secrets.
+    const response = await fetch('YOUR_CUSTOM_AI_ENDPOINT_URL', { // <--- CHANGE THIS URL
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
+        // Add any specific headers your custom AI requires, e.g., API keys
+        // 'Authorization': `Bearer ${MY_AI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: aiMessages, // Use the structured messages array
+        model: 'your-custom-model-name', // <--- CHANGE THIS TO YOUR CUSTOM MODEL NAME
+        messages: aiMessages, // This structure is common, adapt if your AI expects something different
       }),
     });
+    // --- END CUSTOM AI INTEGRATION ---
 
     if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'Rate limit exceeded. Please try again in a moment.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: 'AI credits exhausted. Please add credits to your workspace in Settings → Workspace → Usage.' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      const error = await response.text();
-      console.error('Lovable AI error:', error);
-      throw new Error(`Lovable AI error: ${response.status}`);
+      const errorText = await response.text();
+      console.error('Custom AI error:', response.status, errorText);
+      // Adapt error handling based on your custom AI's responses
+      return new Response(
+        JSON.stringify({ error: `Custom AI error: ${response.status} - ${errorText}` }),
+        { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const data = await response.json();
-    const content = data.choices[0].message.content;
+    // IMPORTANT: Adapt this line to correctly parse the response structure from your custom AI.
+    // For example, if your AI returns { result: { text: "..." } }, you'd use data.result.text
+    const content = data.choices[0].message.content; 
     
-    console.log('Raw response:', content);
+    console.log('Raw response from custom AI:', content);
 
     // Extract JSON from markdown code blocks if present
     let jsonContent = content;
@@ -128,7 +125,7 @@ Example for React (NO exports!):
     try {
       parsedResponse = JSON.parse(jsonContent);
     } catch (e) {
-      console.error('Failed to parse JSON:', jsonContent);
+      console.error('Failed to parse JSON from AI response:', jsonContent);
       // Fallback: treat entire content as HTML
       parsedResponse = {
         type: 'html',
