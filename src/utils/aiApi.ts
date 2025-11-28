@@ -12,10 +12,13 @@ interface GenerateCodeResponse {
 }
 
 export const generateCode = async (payload: GenerateCodePayload): Promise<GenerateCodeResponse> => {
-  const response = await fetch('/api/generate-code', { // This will be your new serverless endpoint
+  const token = localStorage.getItem('token'); // Get token from local storage
+
+  const response = await fetch('/api/generate-code', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` }), // Add token if available
     },
     body: JSON.stringify(payload),
   });

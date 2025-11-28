@@ -7,7 +7,7 @@ import sLogo from "@/assets/s-logo.png";
 import AnimatedBackground from "@/components/AnimatedBackground";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { AuthDialog } from "@/components/AuthDialog";
-import { useMockAuth } from "@/hooks/useMockAuth"; // Use mock auth
+import { useAuth } from "@/hooks/useAuth"; // Use the updated auth hook
 import { toast } from "sonner";
 
 const Index = () => {
@@ -15,7 +15,7 @@ const Index = () => {
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [isSignUpMode, setIsSignUpMode] = useState(true);
   const { ref: howItWorksRef, isVisible: howItWorksVisible } = useScrollAnimation();
-  const { user, isLoading, signOut } = useMockAuth(); // Use mock auth
+  const { user, isLoading } = useAuth(); // Use the updated auth hook
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -80,7 +80,7 @@ const Index = () => {
 
   const getUserFirstName = () => {
     if (!user) return '';
-    const fullName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+    const fullName = user.full_name || user.email?.split('@')[0] || 'User';
     return fullName.split(' ')[0];
   };
 
@@ -103,9 +103,7 @@ const Index = () => {
           {user ? (
             <>
               <span className="text-sm font-medium">{getUserFirstName()}'s Cortex</span>
-              <Button variant="ghost" size="sm" onClick={signOut}>
-                Sign Out
-              </Button>
+              {/* No Sign Out button as per user request */}
             </>
           ) : (
             <>

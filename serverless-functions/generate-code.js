@@ -1,16 +1,70 @@
-// This file contains the serverless function logic that was previously in Supabase Edge Functions.
-// You need to deploy this code to a serverless platform (e.g., Vercel, Netlify, AWS Lambda)
-// and configure it to be accessible at the /api/generate-code endpoint.
-// Ensure LOVABLE_API_KEY is set as an environment variable in your serverless deployment.
+import "https://deno.land/x/xhr@0.1.0/mod.ts"; // This line is for Deno, will be ignored by Node.js environments
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const DB_PATH = path.join(__dirname, 'db.json');
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+async function readDb() {
+  try {
+    const data = await fs.readFile(DB_PATH, 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    console.error('Error reading db.json:', error);
+    return { users: [] };
+  }
+}
+
+async function writeDb(data) {
+  try {
+    await fs.writeFile(DB_PATH, JSON.stringify(data, null, 2), 'utf8');
+  } catch (error) {
+    console.error('Error writing db.json:', error);
+  }
+}
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
-    return res.status(200).send('OK');
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.split(' ')[1];
+
+    if (!token) {
+      return res.status(401).json({ error: 'Authentication token required.' });
+    }
+
+    const db = await readDb();
+    let user = db.users.find(u => u.token === token);
+
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid authentication token.' });
+    }
+
+    // Daily credit reset logic
+    const now = new Date();
+    const lastReset = new Date(user.lastCreditReset);
+    if (now.toDateString() !== lastReset.toDateString()) {
+      user.credits = 4; // Reset to 4 daily credits
+      user.lastCreditReset = now.toISOString();
+    }
+
+    if (user.credits <= 0) {
+      await writeDb(db); // Save potential credit reset
+      return res.status(403).json({ error: 'Daily AI credits exhausted. Please try again tomorrow.' });
+    }
+
     const { prompt, conversationHistory, image } = req.body;
-    const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY; // Access from environment variables
+    const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
 
     if (!LOVABLE_API_KEY) {
       return res.status(500).json({ error: 'LOVABLE_API_KEY is not configured in the serverless environment.' });
@@ -121,6 +175,10 @@ Example for React (NO exports!):
         description: 'Generated based on your request'
       };
     }
+
+    // Decrement credits after successful AI generation
+    user.credits -= 1;
+    await writeDb(db);
 
     return res.status(200).json(parsedResponse);
 

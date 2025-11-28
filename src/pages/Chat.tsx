@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useMockAuth } from '@/hooks/useMockAuth'; // Use mock auth
+import { useAuth } from '@/hooks/useAuth'; // Use the updated auth hook
 import { ChatInterface } from '@/components/ChatInterface';
 import { CodePanel } from '@/components/CodePanel';
 import { PreviewPanel } from '@/components/PreviewPanel';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Monitor, Code } from 'lucide-react';
+import { AuthDialog } from '@/components/AuthDialog'; // Import AuthDialog for delete option
 
 const Chat = () => {
-  const { user, isLoading, signOut } = useMockAuth(); // Use mock auth
+  const { user, isLoading, deleteAccount } = useAuth(); // Use the updated auth hook
   const navigate = useNavigate();
   const location = useLocation();
   const [initialPrompt] = useState<string | undefined>(location.state?.prompt);
@@ -18,6 +19,7 @@ const Chat = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState('preview');
   const [fixErrorsPrompt, setFixErrorsPrompt] = useState<string | null>(null);
+  const [authDialogOpen, setAuthDialogOpen] = useState(false); // State for AuthDialog
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -27,7 +29,7 @@ const Chat = () => {
 
   const getUserFirstName = () => {
     if (!user) return '';
-    const fullName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+    const fullName = user.full_name || user.email?.split('@')[0] || 'User';
     return fullName.split(' ')[0];
   };
 
@@ -66,8 +68,8 @@ const Chat = () => {
             <img src="/src/assets/cortex-logo.png" alt="Cortex" className="h-8 w-8" />
             <span className="text-xl font-bold">{getUserFirstName()}'s Cortex</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={signOut}>
-            Sign Out
+          <Button variant="ghost" size="sm" onClick={() => setAuthDialogOpen(true)}>
+            Account
           </Button>
         </div>
       </header>
@@ -119,6 +121,7 @@ const Chat = () => {
           </Tabs>
         </div>
       </div>
+      <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} initialIsSignUp={false} />
     </div>
   );
 };

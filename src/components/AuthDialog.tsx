@@ -1,12 +1,12 @@
 "use client";
 
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
-import { useMockAuth } from "@/hooks/useMockAuth"; // Use mock auth
+import { useAuth } from "@/hooks/useAuth"; // Use the updated auth hook
 
 interface AuthDialogProps {
   open: boolean;
@@ -19,7 +19,7 @@ export const AuthDialog = ({ open, onOpenChange, initialIsSignUp = true }: AuthD
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(initialIsSignUp);
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn, signUp } = useMockAuth(); // Get mock auth functions
+  const { signIn, signUp, deleteAccount, user } = useAuth(); // Get auth functions and user
 
   useEffect(() => {
     setIsSignUp(initialIsSignUp);
@@ -40,7 +40,7 @@ export const AuthDialog = ({ open, onOpenChange, initialIsSignUp = true }: AuthD
 
     let authResult;
     if (isSignUp) {
-      authResult = signUp(email, password);
+      authResult = await signUp(email, password);
       if (authResult.error) {
         toast.error(authResult.error.message);
       } else {
@@ -48,7 +48,7 @@ export const AuthDialog = ({ open, onOpenChange, initialIsSignUp = true }: AuthD
         onOpenChange(false);
       }
     } else {
-      authResult = signIn(email, password);
+      authResult = await signIn(email, password);
       if (authResult.error) {
         toast.error(authResult.error.message);
       } else {
@@ -57,6 +57,21 @@ export const AuthDialog = ({ open, onOpenChange, initialIsSignUp = true }: AuthD
       }
     }
     
+    setIsLoading(false);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
+      return;
+    }
+    setIsLoading(true);
+    const result = await deleteAccount();
+    if (result.error) {
+      toast.error(result.error.message);
+    } else {
+      toast.success("Account deleted successfully!");
+      onOpenChange(false);
+    }
     setIsLoading(false);
   };
 
@@ -120,6 +135,18 @@ export const AuthDialog = ({ open, onOpenChange, initialIsSignUp = true }: AuthD
             {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
           </Button>
         </div>
+        {user && ( // Only show delete option if user is logged in
+          <DialogFooter className="mt-4">
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAccount}
+              disabled={isLoading}
+              className="w-full"
+            >
+              {isLoading ? "Deleting..." : "Delete Account"}
+            </Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );
