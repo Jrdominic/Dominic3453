@@ -1,7 +1,7 @@
 import { Plus, Paperclip, Palette, Mic, ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import sLogo from "@/assets/s-logo.png";
 import AnimatedBackground from "@/components/AnimatedBackground";
@@ -17,6 +17,8 @@ const Index = () => {
   const { ref: howItWorksRef, isVisible: howItWorksVisible } = useScrollAnimation();
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isLoading && user) {
@@ -25,14 +27,30 @@ const Index = () => {
   }, [user, isLoading, navigate]);
 
   const handleSendClick = () => {
-    if (!inputValue.trim()) {
-      toast.error('Please enter a prompt');
+    if (!inputValue.trim() && !selectedImage) {
+      toast.error('Please enter a prompt or attach an image');
       return;
     }
     if (user) {
-      navigate('/chat', { state: { prompt: inputValue } });
+      navigate('/chat', { state: { prompt: inputValue, image: selectedImage } });
     } else {
       toast.info("Please log in or sign up to use Cortex.");
+    }
+  };
+
+  const handleClipClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSelectedImage(reader.result as string);
+        setInputValue(prev => prev ? `[Image Attached] ${prev}` : '[Image Attached]');
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -133,10 +151,18 @@ const Index = () => {
               />
 
               <div className="flex items-center gap-2 shrink-0">
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
                 <Button
                   variant="ghost"
                   size="icon"
                   className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-transparent"
+                  onClick={handleClipClick}
                 >
                   <Paperclip className="h-5 w-5" />
                 </Button>

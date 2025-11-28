@@ -13,6 +13,7 @@ const Chat = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [initialPrompt] = useState<string | undefined>(location.state?.prompt);
+  const [initialImage] = useState<string | undefined>(location.state?.image);
   const [generatedCode, setGeneratedCode] = useState({ code: '', type: 'html' as 'html' | 'react', title: '', description: '' });
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState('preview');
@@ -73,6 +74,7 @@ const Chat = () => {
         <div className="w-[400px] border-r flex-shrink-0">
           <ChatInterface 
             initialPrompt={initialPrompt} 
+            initialImage={initialImage}
             onCodeGenerated={handleCodeGenerated}
             onGeneratingStart={handleGeneratingStart}
             fixErrorsPrompt={fixErrorsPrompt}

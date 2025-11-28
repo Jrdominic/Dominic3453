@@ -8,22 +8,24 @@ import { supabase } from '@/integrations/supabase/client';
 interface Message {
   role: 'user' | 'assistant' | 'status';
   content: string;
+  image?: string; // Added image field
 }
 
 interface ChatInterfaceProps {
   initialPrompt?: string;
+  initialImage?: string; // Added initialImage prop
   onCodeGenerated: (codeData: { code: string; type: 'html' | 'react'; title: string; description: string }) => void;
   onGeneratingStart: () => void;
   fixErrorsPrompt?: string | null;
   onFixErrorsHandled?: () => void;
 }
 
-export const ChatInterface = ({ initialPrompt, onCodeGenerated, onGeneratingStart, fixErrorsPrompt, onFixErrorsHandled }: ChatInterfaceProps) => {
+export const ChatInterface = ({ initialPrompt, initialImage, onCodeGenerated, onGeneratingStart, fixErrorsPrompt, onFixErrorsHandled }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const conversationHistoryRef = useRef<Array<{ role: string; content: string }>>([]);
+  const conversationHistoryRef = useRef<Array<{ role: string; content: string; image?: string }>>([]); // Updated history type
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -34,10 +36,10 @@ export const ChatInterface = ({ initialPrompt, onCodeGenerated, onGeneratingStar
   }, [messages]);
 
   useEffect(() => {
-    if (initialPrompt) {
-      sendMessage(initialPrompt);
+    if (initialPrompt || initialImage) {
+      sendMessage(initialPrompt, initialImage);
     }
-  }, []);
+  }, [initialPrompt, initialImage]); // Depend on initialImage as well
 
   useEffect(() => {
     if (fixErrorsPrompt) {
@@ -50,11 +52,11 @@ export const ChatInterface = ({ initialPrompt, onCodeGenerated, onGeneratingStar
     }
   }, [fixErrorsPrompt]);
 
-  const sendMessage = async (messageText?: string) => {
+  const sendMessage = async (messageText?: string, imageToSend?: string) => {
     const text = messageText || input;
-    if (!text.trim() || isLoading) return;
+    if ((!text.trim() && !imageToSend) || isLoading) return;
 
-    const userMsg: Message = { role: 'user', content: text };
+    const userMsg: Message = { role: 'user', content: text, ...(imageToSend && { image: imageToSend }) };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsLoading(true);
@@ -68,7 +70,8 @@ export const ChatInterface = ({ initialPrompt, onCodeGenerated, onGeneratingStar
       const { data, error } = await supabase.functions.invoke('generate-code', {
         body: { 
           prompt: text,
-          conversationHistory: conversationHistoryRef.current
+          conversationHistory: conversationHistoryRef.current,
+          image: imageToSend // Pass image data to the edge function
         }
       });
 
@@ -86,7 +89,7 @@ export const ChatInterface = ({ initialPrompt, onCodeGenerated, onGeneratingStar
 
       // Update conversation history
       conversationHistoryRef.current.push(
-        { role: 'user', content: text },
+        { role: 'user', content: text, ...(imageToSend && { image: imageToSend }) },
         { role: 'assistant', content: `Generated ${data.type} code: ${data.title}` }
       );
 
@@ -135,6 +138,9 @@ export const ChatInterface = ({ initialPrompt, onCodeGenerated, onGeneratingStar
               }`}
             >
               {msg.role === 'status' && <Loader2 className="h-4 w-4 animate-spin" />}
+              {msg.image && (
+                <img src={msg.image} alt="User uploaded" className="max-w-full h-auto rounded-md mb-2" />
+              )}
               <p className="whitespace-pre-wrap">{msg.content}</p>
             </div>
           </div>
@@ -159,7 +165,7 @@ export const ChatInterface = ({ initialPrompt, onCodeGenerated, onGeneratingStar
           />
           <Button
             onClick={() => sendMessage()}
-            disabled={isLoading || !input.trim()}
+            disabled={isLoading || (!input.trim() && !initialImage)} // Disable if no text and no initial image
             size="icon"
             className="h-[60px] w-[60px]"
           >

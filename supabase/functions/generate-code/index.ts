@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, conversationHistory } = await req.json();
+    const { prompt, conversationHistory, image } = await req.json(); // Receive image data
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
     if (!LOVABLE_API_KEY) {
@@ -62,13 +62,25 @@ Example for React (NO exports!):
   "description": "A feature-rich todo application"
 }`;
 
-    const messages = [
-      { role: 'system', content: systemPrompt },
-      ...(conversationHistory || []),
-      { role: 'user', content: prompt }
+    const aiMessages: any[] = [
+      { role: 'system', parts: [{ type: 'text', text: systemPrompt }] },
+      ...(conversationHistory || []).map((msg: any) => ({
+        role: msg.role,
+        parts: [
+          { type: 'text', text: msg.content },
+          ...(msg.image ? [{ type: 'image_url', image_url: { url: msg.image } }] : [])
+        ]
+      })),
     ];
 
+    const userMessageParts: any[] = [{ type: 'text', text: prompt }];
+    if (image) {
+      userMessageParts.push({ type: 'image_url', image_url: { url: image } });
+    }
+    aiMessages.push({ role: 'user', parts: userMessageParts });
+
     console.log('Generating code for prompt:', prompt);
+    console.log('Messages sent to AI:', JSON.stringify(aiMessages, null, 2));
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -78,7 +90,7 @@ Example for React (NO exports!):
       },
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
-        messages,
+        messages: aiMessages, // Use the structured messages array
       }),
     });
 
