@@ -6,10 +6,10 @@ import { CodePanel } from '@/components/CodePanel';
 import { PreviewPanel } from '@/components/PreviewPanel';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LogOut, Monitor, Code } from 'lucide-react';
+import { Monitor, Code } from 'lucide-react';
 
 const Chat = () => {
-  const { user, isLoading, signOut } = useAuth(); // useAuth now provides Supabase user
+  const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [initialPrompt] = useState<string | undefined>(location.state?.prompt);
@@ -20,19 +20,12 @@ const Chat = () => {
 
   useEffect(() => {
     if (!isLoading && !user) {
-      // If not loading and no Supabase user is found, redirect to home
       navigate('/');
     }
   }, [user, isLoading, navigate]);
 
-  const handleSignOut = async () => {
-    await signOut(); // Use Supabase signOut
-    navigate('/');
-  };
-
   const getUserFirstName = () => {
     if (!user) return '';
-    // Get name from Supabase user metadata or email
     const fullName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
     return fullName.split(' ')[0];
   };
@@ -40,7 +33,6 @@ const Chat = () => {
   const handleCodeGenerated = (codeData: { code: string; type: 'html' | 'react'; title: string; description: string }) => {
     setGeneratedCode(codeData);
     setIsGenerating(false);
-    // Automatically switch to preview when code is generated
     setActiveTab('preview');
   };
 
@@ -61,7 +53,7 @@ const Chat = () => {
     );
   }
 
-  if (!user) return null; // Don't render chat if no user (will redirect to home)
+  if (!user) return null;
 
   const language = generatedCode.type === 'react' ? 'tsx' : 'markup';
 
@@ -73,15 +65,11 @@ const Chat = () => {
             <img src="/src/assets/cortex-logo.png" alt="Cortex" className="h-8 w-8" />
             <span className="text-xl font-bold">{getUserFirstName()}'s Cortex</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={handleSignOut}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Sign Out
-          </Button>
+          {/* Sign Out button removed */}
         </div>
       </header>
 
       <div className="flex-1 flex overflow-hidden">
-        {/* Chat Panel - Fixed Left Side */}
         <div className="w-[400px] border-r flex-shrink-0">
           <ChatInterface 
             initialPrompt={initialPrompt} 
@@ -92,7 +80,6 @@ const Chat = () => {
           />
         </div>
         
-        {/* Main Content Area with Tabs */}
         <div className="flex-1 flex flex-col">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
             <div className="border-b px-4">

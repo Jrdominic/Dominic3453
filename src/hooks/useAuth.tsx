@@ -26,7 +26,6 @@ export const useAuth = () => {
       },
     );
 
-    // Initial check for session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setAuthState({
         user: session?.user || null,
@@ -36,18 +35,9 @@ export const useAuth = () => {
     });
 
     return () => {
-      authListener.subscription.unsubscribe(); // Fixed: Call unsubscribe on the subscription object
+      authListener.subscription.unsubscribe();
     };
   }, []);
 
-  const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Error signing out:', error.message);
-    } else {
-      setAuthState({ user: null, session: null, isLoading: false });
-    }
-  };
-
-  return { ...authState, signOut };
+  return { ...authState };
 };

@@ -6,22 +6,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useState, useEffect } from "react"; // Import useEffect
+import { useState, useEffect } from "react";
 
 interface AuthDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  initialIsSignUp?: boolean; // Added prop to control initial state
+  initialIsSignUp?: boolean;
 }
 
 export const AuthDialog = ({ open, onOpenChange, initialIsSignUp = true }: AuthDialogProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(initialIsSignUp); // Use initialIsSignUp
+  const [isSignUp, setIsSignUp] = useState(initialIsSignUp);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Reset isSignUp when dialog opens/closes or initialIsSignUp changes
-  useEffect(() => { // Changed useState to useEffect
+  useEffect(() => {
     setIsSignUp(initialIsSignUp);
   }, [initialIsSignUp]);
 
@@ -49,9 +48,8 @@ export const AuthDialog = ({ open, onOpenChange, initialIsSignUp = true }: AuthD
       } else {
         if (signUpData.session) {
           toast.success("Account created and signed in successfully!");
-          onOpenChange(false); // Close dialog, Index page will navigate
+          onOpenChange(false);
         } else {
-          // Account created, but no session. Attempt to sign in.
           const { error: signInError } = await supabase.auth.signInWithPassword({
             email,
             password,
@@ -61,7 +59,7 @@ export const AuthDialog = ({ open, onOpenChange, initialIsSignUp = true }: AuthD
             toast.error(`Account created, but failed to sign in: ${signInError.message}`);
           } else {
             toast.success("Account created and signed in successfully!");
-            onOpenChange(false); // Close dialog, Index page will navigate
+            onOpenChange(false);
           }
         }
       }
@@ -75,7 +73,7 @@ export const AuthDialog = ({ open, onOpenChange, initialIsSignUp = true }: AuthD
         toast.error(error.message);
       } else {
         toast.success("Signed in successfully!");
-        onOpenChange(false); // Close dialog, Index page will navigate
+        onOpenChange(false);
       }
     }
     
@@ -92,6 +90,11 @@ export const AuthDialog = ({ open, onOpenChange, initialIsSignUp = true }: AuthD
           <DialogDescription className="text-center">
             {isSignUp ? "Sign up to get started" : "Welcome back!"}
           </DialogDescription>
+          {isSignUp && (
+            <DialogDescription className="text-center text-destructive font-semibold mt-2">
+              Account Creation is PERMANENT and you won't be able to Sign out.
+            </DialogDescription>
+          )}
         </DialogHeader>
         
         <div className="flex flex-col gap-4 mt-4">

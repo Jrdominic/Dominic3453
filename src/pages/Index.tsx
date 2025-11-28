@@ -1,4 +1,4 @@
-import { Plus, Paperclip, Palette, Mic, ArrowUp, LogOut } from "lucide-react";
+import { Plus, Paperclip, Palette, Mic, ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
@@ -13,12 +13,11 @@ import { toast } from "sonner";
 const Index = () => {
   const [inputValue, setInputValue] = useState("");
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
-  const [isSignUpMode, setIsSignUpMode] = useState(true); // State to control AuthDialog mode
+  const [isSignUpMode, setIsSignUpMode] = useState(true);
   const { ref: howItWorksRef, isVisible: howItWorksVisible } = useScrollAnimation();
-  const { user, isLoading, signOut } = useAuth();
+  const { user, isLoading } = useAuth();
   const navigate = useNavigate();
 
-  // If user is already signed in, redirect to chat
   useEffect(() => {
     if (!isLoading && user) {
       navigate('/chat');
@@ -33,15 +32,8 @@ const Index = () => {
     if (user) {
       navigate('/chat', { state: { prompt: inputValue } });
     } else {
-      // If not logged in, prompt to log in via the buttons, or just let them type a prompt
-      // For now, if not logged in, we'll just show a toast and expect them to use the buttons.
       toast.info("Please log in or sign up to use Cortex.");
     }
-  };
-
-  const handleSignOut = async () => {
-    await signOut();
-    setInputValue("");
   };
 
   const getUserFirstName = () => {
@@ -53,7 +45,6 @@ const Index = () => {
   return (
     <div className="flex min-h-screen flex-col bg-background relative">
       <AnimatedBackground />
-      {/* Header */}
       <header className="flex items-center justify-between px-6 py-4 border-b border-border relative z-10">
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2">
@@ -70,10 +61,7 @@ const Index = () => {
           {user ? (
             <>
               <span className="text-sm font-medium">{getUserFirstName()}'s Cortex</span>
-              <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
-              </Button>
+              {/* Sign Out button removed */}
             </>
           ) : (
             <>
@@ -101,10 +89,8 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Hero Section */}
       <main className="flex flex-1 flex-col items-center justify-center px-4 py-16 relative z-10">
         <div className="w-full max-w-3xl space-y-8 text-center">
-          {/* Badge */}
           <div className="flex justify-center">
             <Badge className="gap-2 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 px-3 py-1">
               <span className="text-xs font-medium">New</span>
@@ -113,7 +99,6 @@ const Index = () => {
             </Badge>
           </div>
 
-          {/* Heading */}
           <div className="space-y-6 animate-fade-in">
             <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl animate-float">
               Build something
@@ -123,7 +108,6 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Input Box */}
           <div className="mx-auto w-full max-w-2xl animate-fade-in animate-float">
             <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-lg transition-all hover:border-border/60 focus-within:border-primary/50 hover:shadow-xl hover:-translate-y-1">
               <Button
@@ -186,7 +170,6 @@ const Index = () => {
         </div>
       </main>
 
-      {/* How it works Section */}
       <section ref={howItWorksRef} className="border-t border-border px-6 py-16 relative z-10">
         <div className="mx-auto max-w-7xl">
           <h2 className={`text-4xl font-bold text-center text-foreground mb-12 transition-opacity duration-700 ${howItWorksVisible ? 'opacity-100 animate-float' : 'opacity-0'}`}>
@@ -194,7 +177,6 @@ const Index = () => {
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Card 1 - Describe */}
             <div className={`rounded-2xl border border-border bg-card p-8 flex flex-col items-center text-center space-y-4 transition-all duration-700 hover:scale-105 hover:shadow-2xl hover:border-primary/50 ${howItWorksVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
               <div className="text-primary text-5xl">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -208,7 +190,6 @@ const Index = () => {
               </p>
             </div>
 
-            {/* Card 2 - AI Modifies Code */}
             <div className={`rounded-2xl border border-border bg-card p-8 flex flex-col items-center text-center space-y-4 transition-all duration-700 hover:scale-105 hover:shadow-2xl hover:border-purple/50 ${howItWorksVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
               <div className="text-purple text-5xl">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -224,7 +205,6 @@ const Index = () => {
               </p>
             </div>
 
-            {/* Card 3 - Preview & Export */}
             <div className={`rounded-2xl border border-border bg-card p-8 flex flex-col items-center text-center space-y-4 transition-all duration-700 hover:scale-105 hover:shadow-2xl hover:border-primary/50 ${howItWorksVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
               <div className="text-primary text-5xl">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -241,7 +221,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="border-t border-border px-6 py-8 relative z-10">
         <div className="mx-auto max-w-7xl flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
