@@ -12,54 +12,51 @@ interface AuthDialogProps {
 }
 
 export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
-  const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
-  const [step, setStep] = useState<"phone" | "otp">("phone");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSignUp, setIsSignUp] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSendOtp = async () => {
-    if (!phone || phone.length < 10) {
-      toast.error("Please enter a valid phone number");
+  const handleAuth = async () => {
+    if (!email || !password) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters");
       return;
     }
 
     setIsLoading(true);
-    const { error } = await supabase.auth.signInWithOtp({
-      phone: phone.startsWith('+') ? phone : `+${phone}`,
-    });
+
+    if (isSignUp) {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+      
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Account created! Signing you in...");
+        window.location.href = '/chat';
+      }
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Signed in successfully!");
+        window.location.href = '/chat';
+      }
+    }
     
     setIsLoading(false);
-    
-    if (error) {
-      toast.error("Failed to send code: " + error.message);
-    } else {
-      toast.success("Verification code sent!");
-      setStep("otp");
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    if (!otp || otp.length !== 6) {
-      toast.error("Please enter the 6-digit code");
-      return;
-    }
-
-    setIsLoading(true);
-    const { error } = await supabase.auth.verifyOtp({
-      phone: phone.startsWith('+') ? phone : `+${phone}`,
-      token: otp,
-      type: 'sms'
-    });
-    
-    setIsLoading(false);
-    
-    if (error) {
-      toast.error("Invalid code: " + error.message);
-    } else {
-      toast.success("Signed in successfully!");
-      onOpenChange(false);
-      window.location.href = '/chat';
-    }
   };
 
   return (
@@ -67,68 +64,55 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center">
-            {step === "phone" ? "Sign in with phone" : "Enter verification code"}
+            {isSignUp ? "Create account" : "Sign in"}
           </DialogTitle>
           <DialogDescription className="text-center">
-            {step === "phone" 
-              ? "Enter your phone number to receive a verification code" 
-              : `We sent a code to ${phone}`}
+            {isSignUp ? "Sign up to get started" : "Welcome back!"}
           </DialogDescription>
         </DialogHeader>
         
         <div className="flex flex-col gap-4 mt-4">
-          {step === "phone" ? (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="+1234567890"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="h-12"
-                />
-                <p className="text-xs text-muted-foreground">Include country code (e.g., +1 for US)</p>
-              </div>
-              <Button
-                onClick={handleSendOtp}
-                disabled={isLoading}
-                className="w-full h-12"
-              >
-                {isLoading ? "Sending..." : "Send Code"}
-              </Button>
-            </>
-          ) : (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="otp">Verification Code</Label>
-                <Input
-                  id="otp"
-                  type="text"
-                  placeholder="123456"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  maxLength={6}
-                  className="h-12 text-center text-2xl tracking-widest"
-                />
-              </div>
-              <Button
-                onClick={handleVerifyOtp}
-                disabled={isLoading}
-                className="w-full h-12"
-              >
-                {isLoading ? "Verifying..." : "Verify"}
-              </Button>
-              <Button
-                onClick={() => setStep("phone")}
-                variant="ghost"
-                className="w-full"
-              >
-                Change phone number
-              </Button>
-            </>
-          )}
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAuth()}
+              className="h-12"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAuth()}
+              className="h-12"
+            />
+          </div>
+
+          <Button
+            onClick={handleAuth}
+            disabled={isLoading}
+            className="w-full h-12"
+          >
+            {isLoading ? "Loading..." : (isSignUp ? "Sign Up" : "Sign In")}
+          </Button>
+
+          <Button
+            onClick={() => setIsSignUp(!isSignUp)}
+            variant="ghost"
+            className="w-full"
+          >
+            {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
