@@ -6,18 +6,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useEffect } from "react"; // Import useEffect
 
 interface AuthDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialIsSignUp?: boolean; // Added prop to control initial state
 }
 
-export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
+export const AuthDialog = ({ open, onOpenChange, initialIsSignUp = true }: AuthDialogProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(true);
+  const [isSignUp, setIsSignUp] = useState(initialIsSignUp); // Use initialIsSignUp
   const [isLoading, setIsLoading] = useState(false);
+
+  // Reset isSignUp when dialog opens/closes or initialIsSignUp changes
+  useEffect(() => { // Changed useState to useEffect
+    setIsSignUp(initialIsSignUp);
+  }, [initialIsSignUp]);
 
   const handleAuth = async () => {
     if (!email || !password) {
@@ -41,10 +47,9 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
       if (signUpError) {
         toast.error(signUpError.message);
       } else {
-        // If signup was successful, try to sign in immediately if a session wasn't returned
         if (signUpData.session) {
           toast.success("Account created and signed in successfully!");
-          window.location.href = '/chat';
+          onOpenChange(false); // Close dialog, Index page will navigate
         } else {
           // Account created, but no session. Attempt to sign in.
           const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -56,7 +61,7 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
             toast.error(`Account created, but failed to sign in: ${signInError.message}`);
           } else {
             toast.success("Account created and signed in successfully!");
-            window.location.href = '/chat';
+            onOpenChange(false); // Close dialog, Index page will navigate
           }
         }
       }
@@ -70,7 +75,7 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
         toast.error(error.message);
       } else {
         toast.success("Signed in successfully!");
-        window.location.href = '/chat';
+        onOpenChange(false); // Close dialog, Index page will navigate
       }
     }
     

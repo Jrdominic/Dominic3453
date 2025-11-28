@@ -6,15 +6,16 @@ import { useNavigate } from "react-router-dom";
 import sLogo from "@/assets/s-logo.png";
 import AnimatedBackground from "@/components/AnimatedBackground";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
-import { AuthDialog } from "@/components/AuthDialog"; // Re-import AuthDialog
+import { AuthDialog } from "@/components/AuthDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 const Index = () => {
   const [inputValue, setInputValue] = useState("");
-  const [authDialogOpen, setAuthDialogOpen] = useState(false); // Re-introduce authDialogOpen state
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [isSignUpMode, setIsSignUpMode] = useState(true); // State to control AuthDialog mode
   const { ref: howItWorksRef, isVisible: howItWorksVisible } = useScrollAnimation();
-  const { user, isLoading, signOut } = useAuth(); // useAuth now provides Supabase user
+  const { user, isLoading, signOut } = useAuth();
   const navigate = useNavigate();
 
   // If user is already signed in, redirect to chat
@@ -26,24 +27,25 @@ const Index = () => {
 
   const handleSendClick = () => {
     if (!inputValue.trim()) {
-      toast.error(user ? 'Please enter a prompt' : 'Please type your name or a prompt');
+      toast.error('Please enter a prompt');
       return;
     }
     if (user) {
       navigate('/chat', { state: { prompt: inputValue } });
     } else {
-      setAuthDialogOpen(true); // Open AuthDialog if not logged in
+      // If not logged in, prompt to log in via the buttons, or just let them type a prompt
+      // For now, if not logged in, we'll just show a toast and expect them to use the buttons.
+      toast.info("Please log in or sign up to use Cortex.");
     }
   };
 
   const handleSignOut = async () => {
-    await signOut(); // Use Supabase signOut
-    setInputValue(""); // Clear input after sign out
+    await signOut();
+    setInputValue("");
   };
 
   const getUserFirstName = () => {
     if (!user) return '';
-    // Get name from Supabase user metadata or email
     const fullName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
     return fullName.split(' ')[0];
   };
@@ -52,7 +54,7 @@ const Index = () => {
     <div className="flex min-h-screen flex-col bg-background relative">
       <AnimatedBackground />
       {/* Header */}
-      <header className="flex items-center justify-center px-6 py-4 border-b border-border relative z-10">
+      <header className="flex items-center justify-between px-6 py-4 border-b border-border relative z-10">
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2">
             <img src={sLogo} alt="Logo" className="h-8 w-8" />
@@ -63,17 +65,39 @@ const Index = () => {
               Pricing
             </button>
           </nav>
-          <div className="flex items-center gap-3">
-            {user && ( // Only show user info and sign out if logged in
-              <>
-                <span className="text-sm font-medium">{getUserFirstName()}'s Cortex</span>
-                <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sign Out
-                </Button>
-              </>
-            )}
-          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          {user ? (
+            <>
+              <span className="text-sm font-medium">{getUserFirstName()}'s Cortex</span>
+              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setIsSignUpMode(false);
+                  setAuthDialogOpen(true);
+                }}
+              >
+                Login
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => {
+                  setIsSignUpMode(true);
+                  setAuthDialogOpen(true);
+                }}
+              >
+                Get Started
+              </Button>
+            </>
+          )}
         </div>
       </header>
 
@@ -120,7 +144,7 @@ const Index = () => {
                     handleSendClick();
                   }
                 }}
-                placeholder={user ? "Ask Cortex to create a blog about..." : "Type Your name"}
+                placeholder="Ask Cortex to create a blog about..."
                 className="flex-1 bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
               />
 
@@ -237,7 +261,7 @@ const Index = () => {
         </div>
       </footer>
 
-      <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
+      <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} initialIsSignUp={isSignUpMode} />
     </div>
   );
 };
