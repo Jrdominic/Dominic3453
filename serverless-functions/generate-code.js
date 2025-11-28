@@ -64,11 +64,11 @@ export default async function handler(req, res) {
     }
 
     const { prompt, conversationHistory, image } = req.body;
-    const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
+    // const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY; // No longer needed if using local AI
 
-    if (!LOVABLE_API_KEY) {
-      return res.status(500).json({ error: 'LOVABLE_API_KEY is not configured in the serverless environment.' });
-    }
+    // if (!LOVABLE_API_KEY) {
+    //   return res.status(500).json({ error: 'LOVABLE_API_KEY is not configured in the serverless environment.' });
+    // }
 
     const systemPrompt = `You are Cortex, an expert code generation AI. Generate complete, working, production-ready code based on user requests.
 
@@ -130,32 +130,33 @@ Example for React (NO exports!):
     }
     aiMessages.push({ role: 'user', parts: userMessageParts });
 
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    // --- START LOCAL AI INTEGRATION ---
+    // Replace 'http://localhost:YOUR_AI_PORT/YOUR_AI_ENDPOINT' with your actual local AI server URL
+    // And adapt the body/headers to match what your local AI expects.
+    // The example below assumes your local AI expects a similar 'messages' array.
+    const aiResponse = await fetch('http://localhost:5000/generate', { // <--- CHANGE THIS URL
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
+        // Add any specific headers your local AI requires, e.g., API keys
+        // 'X-API-Key': 'your-local-ai-key',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'your-local-model-name', // <--- CHANGE THIS TO YOUR LOCAL MODEL NAME
         messages: aiMessages,
       }),
     });
+    // --- END LOCAL AI INTEGRATION ---
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error('Lovable AI error:', aiResponse.status, errorText);
-      if (aiResponse.status === 429) {
-        return res.status(429).json({ error: 'Rate limit exceeded. Please try again in a moment.' });
-      }
-      if (aiResponse.status === 402) {
-        return res.status(402).json({ error: 'AI credits exhausted. Please add credits to your workspace in Settings → Workspace → Usage.' });
-      }
-      throw new Error(`Lovable AI error: ${aiResponse.status} - ${errorText}`);
+      console.error('Local AI error:', aiResponse.status, errorText);
+      // Adapt error handling based on your local AI's responses
+      return res.status(aiResponse.status).json({ error: `Local AI error: ${aiResponse.status} - ${errorText}` });
     }
 
     const data = await aiResponse.json();
-    const content = data.choices[0].message.content;
+    const content = data.choices[0].message.content; // <--- ADAPT THIS BASED ON YOUR LOCAL AI'S RESPONSE STRUCTURE
 
     let jsonContent = content;
     const jsonMatch = content.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
