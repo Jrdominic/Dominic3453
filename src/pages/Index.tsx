@@ -105,6 +105,12 @@ const Index = () => {
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSendClick();
+                  }
+                }}
                 placeholder={user ? "Ask Cortex to create a blog about..." : "Type Your name"}
                 className="flex-1 bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
               />
