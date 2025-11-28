@@ -44,16 +44,27 @@ export const PreviewPanel = ({ code, type, isLoading }: PreviewPanelProps) => {
               <script type="text/babel">
                 ${code}
                 
-                // Find the default export or the main component
-                const Component = typeof exports !== 'undefined' && exports.default 
-                  ? exports.default 
-                  : (typeof App !== 'undefined' ? App : null);
+                // Auto-detect component - try default export, then look for any function component
+                let Component = null;
+                
+                if (typeof exports !== 'undefined' && exports.default) {
+                  Component = exports.default;
+                } else {
+                  // Find any function that looks like a component (starts with capital letter)
+                  const windowKeys = Object.keys(window);
+                  for (let key of windowKeys) {
+                    if (key[0] === key[0].toUpperCase() && typeof window[key] === 'function') {
+                      Component = window[key];
+                      break;
+                    }
+                  }
+                }
                 
                 if (Component) {
                   const root = ReactDOM.createRoot(document.getElementById('root'));
                   root.render(React.createElement(Component));
                 } else {
-                  document.getElementById('root').innerHTML = '<div style="padding: 20px; color: red;">Error: No component found to render</div>';
+                  document.getElementById('root').innerHTML = '<div style="padding: 20px; color: red;">Error: No component found</div>';
                 }
               </script>
             </body>
