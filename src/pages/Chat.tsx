@@ -1,15 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
 import { ChatInterface } from '@/components/ChatInterface';
 import { CodePanel } from '@/components/CodePanel';
 import { PreviewPanel } from '@/components/PreviewPanel';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LogOut, Monitor, Code } from 'lucide-react';
+import { Monitor, Code } from 'lucide-react';
+import { useGuestUser } from '@/hooks/useGuestUser'; // Import useGuestUser
 
 const Chat = () => {
-  const { user, isLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [initialPrompt] = useState<string | undefined>(location.state?.prompt);
@@ -17,23 +16,15 @@ const Chat = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState('preview');
   const [fixErrorsPrompt, setFixErrorsPrompt] = useState<string | null>(null);
+  const { userName, isLoading: isGuestLoading } = useGuestUser(); // Use useGuestUser
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    // If guest user data is still loading, wait.
+    // If no userName is found after loading, redirect to home to prompt for name.
+    if (!isGuestLoading && !userName) {
       navigate('/');
     }
-  }, [user, isLoading, navigate]);
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
-  };
-
-  const getUserFirstName = () => {
-    if (!user) return '';
-    const fullName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
-    return fullName.split(' ')[0];
-  };
+  }, [userName, isGuestLoading, navigate]);
 
   const handleCodeGenerated = (codeData: { code: string; type: 'html' | 'react'; title: string; description: string }) => {
     setGeneratedCode(codeData);
@@ -51,7 +42,7 @@ const Chat = () => {
     setFixErrorsPrompt(`Fix these errors in the code:\n${errorSummary}`);
   };
 
-  if (isLoading) {
+  if (isGuestLoading) {
     return (
       <div className="h-screen flex items-center justify-center">
         <p className="text-muted-foreground">Loading...</p>
@@ -59,7 +50,9 @@ const Chat = () => {
     );
   }
 
-  if (!user) return null;
+  // If userName is null after loading, it means the user hasn't entered a name yet.
+  // The useEffect above will handle the redirect, so we can return null here.
+  if (!userName) return null;
 
   const language = generatedCode.type === 'react' ? 'tsx' : 'markup';
 
@@ -69,12 +62,9 @@ const Chat = () => {
         <div className="container flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <img src="/src/assets/cortex-logo.png" alt="Cortex" className="h-8 w-8" />
-            <span className="text-xl font-bold">{getUserFirstName()}'s Cortex</span>
+            <span className="text-xl font-bold">{userName}'s Cortex</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={handleSignOut}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Sign Out
-          </Button>
+          {/* No sign-out button as per request */}
         </div>
       </header>
 
