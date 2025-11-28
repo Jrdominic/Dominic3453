@@ -1,3 +1,5 @@
+"use client";
+
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +33,7 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
     setIsLoading(true);
 
     if (isSignUp) {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
@@ -39,8 +41,14 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
       if (error) {
         toast.error(error.message);
       } else {
-        toast.success("Account created! Signing you in...");
-        window.location.href = '/chat';
+        if (data.session) {
+          toast.success("Account created and signed in successfully!");
+          window.location.href = '/chat';
+        } else {
+          // User created, but session is null (e.g., email confirmation required)
+          toast.success("Account created! Please check your email to confirm your account and sign in.");
+          onOpenChange(false); // Close the dialog
+        }
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({
