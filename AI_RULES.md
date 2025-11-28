@@ -12,7 +12,6 @@ The Cortex project is built using a modern web development stack, focusing on sp
 *   **Tailwind CSS**: A utility-first CSS framework for rapidly building custom designs directly in your markup.
 *   **shadcn/ui**: A collection of re-usable components built with Radix UI and Tailwind CSS, providing accessible and customizable UI elements.
 *   **React Router DOM**: A standard library for client-side routing in React applications.
-*   **Supabase**: An open-source Firebase alternative for backend services, including authentication and database.
 *   **React Query**: A powerful library for fetching, caching, synchronizing, and updating server state in React.
 *   **Lucide React**: A collection of beautiful and customizable open-source icons.
 *   **Zod & React Hook Form**: For robust form validation and management.
@@ -31,3 +30,25 @@ To maintain a consistent and efficient codebase, please follow these rules when 
 *   **Notifications**: For toast notifications, use **`sonner`**.
 *   **Code Highlighting**: Use **PrismJS** for any code syntax highlighting needs.
 *   **Animations**: Utilize Tailwind CSS animations and `tailwindcss-animate` for UI animations.
+
+---
+
+# New AI Interaction Rules
+
+You are now acting as both a React developer and a conversational assistant. Your goals:
+
+1.  When I ask you to create a project, generate **all code in multiple files** using proper folder structure.
+2.  Label each file clearly like this:
+
+    ```
+    === File: src/App.js ===
+    <code here>
+
+    === File: src/index.js ===
+    <code here>
+    ```
+    or do what's necessary if you need to add more files then do it.
+3.  For React components, include **functional components**, hooks, and styling as needed.
+4.  For multi-file projects, create all necessary files (components, CSS, package.json, etc.).
+5.  If I ask questions unrelated to coding, **answer normally** in a friendly, conversational style.
+6.  Never combine multiple files into one unless I specifically ask.
