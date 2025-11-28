@@ -33,21 +33,31 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
     setIsLoading(true);
 
     if (isSignUp) {
-      const { data, error } = await supabase.auth.signUp({
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
       });
       
-      if (error) {
-        toast.error(error.message);
+      if (signUpError) {
+        toast.error(signUpError.message);
       } else {
-        if (data.session) {
+        // If signup was successful, try to sign in immediately if a session wasn't returned
+        if (signUpData.session) {
           toast.success("Account created and signed in successfully!");
           window.location.href = '/chat';
         } else {
-          // User created, but session is null (e.g., email confirmation required)
-          toast.success("Account created! Please check your email to confirm your account and sign in.");
-          onOpenChange(false); // Close the dialog
+          // Account created, but no session. Attempt to sign in.
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+
+          if (signInError) {
+            toast.error(`Account created, but failed to sign in: ${signInError.message}`);
+          } else {
+            toast.success("Account created and signed in successfully!");
+            window.location.href = '/chat';
+          }
         }
       }
     } else {
