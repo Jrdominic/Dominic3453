@@ -1,32 +1,53 @@
 import { useState, useEffect } from 'react';
-// Supabase imports are no longer needed for client-side user state management in this hook
+import { supabase } from '@/integrations/supabase/client';
+import { Session, User } from '@supabase/supabase-js';
 
-interface LocalUser {
-  name: string;
+interface AuthState {
+  user: User | null;
+  session: Session | null;
+  isLoading: boolean;
 }
 
 export const useAuth = () => {
-  const [user, setUser] = useState<LocalUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [authState, setAuthState] = useState<AuthState>({
+    user: null,
+    session: null,
+    isLoading: true,
+  });
 
   useEffect(() => {
-    const storedName = localStorage.getItem('cortex_user_name');
-    if (storedName) {
-      setUser({ name: storedName });
-    }
-    setIsLoading(false);
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setAuthState({
+          user: session?.user || null,
+          session: session || null,
+          isLoading: false,
+        });
+      },
+    );
+
+    // Initial check for session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setAuthState({
+        user: session?.user || null,
+        session: session || null,
+        isLoading: false,
+      });
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe(); // Fixed: Call unsubscribe on the subscription object
+    };
   }, []);
 
-  const signInLocal = (name: string) => {
-    localStorage.setItem('cortex_user_name', name);
-    setUser({ name });
+  const signOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error signing out:', error.message);
+    } else {
+      setAuthState({ user: null, session: null, isLoading: false });
+    }
   };
 
-  const signOut = () => {
-    localStorage.removeItem('cortex_user_name');
-    setUser(null);
-  };
-
-  // session will always be null as we are not using Supabase sessions for client-side auth
-  return { user, session: null, isLoading, signInLocal, signOut };
+  return { ...authState, signOut };
 };

@@ -1,23 +1,23 @@
 import { Plus, Paperclip, Palette, Mic, ArrowUp, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useState, useEffect } from "react"; // Added useEffect
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import sLogo from "@/assets/s-logo.png";
 import AnimatedBackground from "@/components/AnimatedBackground";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
-// AuthDialog is no longer needed
+import { AuthDialog } from "@/components/AuthDialog"; // Re-import AuthDialog
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 const Index = () => {
   const [inputValue, setInputValue] = useState("");
-  // authDialogOpen state is no longer needed
+  const [authDialogOpen, setAuthDialogOpen] = useState(false); // Re-introduce authDialogOpen state
   const { ref: howItWorksRef, isVisible: howItWorksVisible } = useScrollAnimation();
-  const { user, isLoading, signInLocal, signOut } = useAuth(); // Added signInLocal, isLoading
+  const { user, isLoading, signOut } = useAuth(); // useAuth now provides Supabase user
   const navigate = useNavigate();
 
-  // If user is already signed in locally, redirect to chat
+  // If user is already signed in, redirect to chat
   useEffect(() => {
     if (!isLoading && user) {
       navigate('/chat');
@@ -26,21 +26,26 @@ const Index = () => {
 
   const handleSendClick = () => {
     if (!inputValue.trim()) {
-      toast.error('Please type your name or a prompt');
+      toast.error(user ? 'Please enter a prompt' : 'Please type your name or a prompt');
       return;
     }
-    signInLocal(inputValue); // Use signInLocal to save the name
-    navigate('/chat', { state: { prompt: inputValue } });
+    if (user) {
+      navigate('/chat', { state: { prompt: inputValue } });
+    } else {
+      setAuthDialogOpen(true); // Open AuthDialog if not logged in
+    }
   };
 
   const handleSignOut = async () => {
-    signOut(); // Use local signOut
+    await signOut(); // Use Supabase signOut
     setInputValue(""); // Clear input after sign out
   };
 
   const getUserFirstName = () => {
     if (!user) return '';
-    return user.name.split(' ')[0]; // Get name from local user object
+    // Get name from Supabase user metadata or email
+    const fullName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+    return fullName.split(' ')[0];
   };
 
   return (
@@ -232,7 +237,7 @@ const Index = () => {
         </div>
       </footer>
 
-      {/* AuthDialog is no longer rendered */}
+      <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
     </div>
   );
 };

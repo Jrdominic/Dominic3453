@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LogOut, Monitor, Code } from 'lucide-react';
 
 const Chat = () => {
-  const { user, isLoading, signOut } = useAuth(); // useAuth now provides local user
+  const { user, isLoading, signOut } = useAuth(); // useAuth now provides Supabase user
   const navigate = useNavigate();
   const location = useLocation();
   const [initialPrompt] = useState<string | undefined>(location.state?.prompt);
@@ -20,19 +20,21 @@ const Chat = () => {
 
   useEffect(() => {
     if (!isLoading && !user) {
-      // If not loading and no local user is found, redirect to home
+      // If not loading and no Supabase user is found, redirect to home
       navigate('/');
     }
   }, [user, isLoading, navigate]);
 
   const handleSignOut = async () => {
-    signOut(); // Use local signOut
+    await signOut(); // Use Supabase signOut
     navigate('/');
   };
 
   const getUserFirstName = () => {
     if (!user) return '';
-    return user.name.split(' ')[0]; // Get name from local user object
+    // Get name from Supabase user metadata or email
+    const fullName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+    return fullName.split(' ')[0];
   };
 
   const handleCodeGenerated = (codeData: { code: string; type: 'html' | 'react'; title: string; description: string }) => {
