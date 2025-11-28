@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LogOut, Monitor, Code } from 'lucide-react';
 
 const Chat = () => {
-  const { user, isLoading, signOut } = useAuth();
+  const { user, isLoading, signOut } = useAuth(); // useAuth now provides local user
   const navigate = useNavigate();
   const location = useLocation();
   const [initialPrompt] = useState<string | undefined>(location.state?.prompt);
@@ -20,19 +20,19 @@ const Chat = () => {
 
   useEffect(() => {
     if (!isLoading && !user) {
+      // If not loading and no local user is found, redirect to home
       navigate('/');
     }
   }, [user, isLoading, navigate]);
 
   const handleSignOut = async () => {
-    await signOut();
+    signOut(); // Use local signOut
     navigate('/');
   };
 
   const getUserFirstName = () => {
     if (!user) return '';
-    const fullName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
-    return fullName.split(' ')[0];
+    return user.name.split(' ')[0]; // Get name from local user object
   };
 
   const handleCodeGenerated = (codeData: { code: string; type: 'html' | 'react'; title: string; description: string }) => {
@@ -59,7 +59,7 @@ const Chat = () => {
     );
   }
 
-  if (!user) return null;
+  if (!user) return null; // Don't render chat if no user (will redirect to home)
 
   const language = generatedCode.type === 'react' ? 'tsx' : 'markup';
 

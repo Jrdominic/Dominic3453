@@ -1,33 +1,32 @@
 import { useState, useEffect } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+// Supabase imports are no longer needed for client-side user state management in this hook
+
+interface LocalUser {
+  name: string;
+}
 
 export const useAuth = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<LocalUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setIsLoading(false);
-      }
-    );
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    const storedName = localStorage.getItem('cortex_user_name');
+    if (storedName) {
+      setUser({ name: storedName });
+    }
+    setIsLoading(false);
   }, []);
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
+  const signInLocal = (name: string) => {
+    localStorage.setItem('cortex_user_name', name);
+    setUser({ name });
   };
 
-  return { user, session, isLoading, signOut };
+  const signOut = () => {
+    localStorage.removeItem('cortex_user_name');
+    setUser(null);
+  };
+
+  // session will always be null as we are not using Supabase sessions for client-side auth
+  return { user, session: null, isLoading, signInLocal, signOut };
 };

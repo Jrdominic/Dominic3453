@@ -1,42 +1,46 @@
 import { Plus, Paperclip, Palette, Mic, ArrowUp, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useState, useEffect } from "react"; // Added useEffect
 import { useNavigate } from "react-router-dom";
 import sLogo from "@/assets/s-logo.png";
 import AnimatedBackground from "@/components/AnimatedBackground";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
-import { AuthDialog } from "@/components/AuthDialog";
+// AuthDialog is no longer needed
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 const Index = () => {
   const [inputValue, setInputValue] = useState("");
-  const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  // authDialogOpen state is no longer needed
   const { ref: howItWorksRef, isVisible: howItWorksVisible } = useScrollAnimation();
-  const { user, signOut } = useAuth();
+  const { user, isLoading, signInLocal, signOut } = useAuth(); // Added signInLocal, isLoading
   const navigate = useNavigate();
+
+  // If user is already signed in locally, redirect to chat
+  useEffect(() => {
+    if (!isLoading && user) {
+      navigate('/chat');
+    }
+  }, [user, isLoading, navigate]);
 
   const handleSendClick = () => {
     if (!inputValue.trim()) {
-      toast.error(user ? 'Please enter a prompt' : 'Please type your name or a prompt');
+      toast.error('Please type your name or a prompt');
       return;
     }
-    if (user) {
-      navigate('/chat', { state: { prompt: inputValue } });
-    } else {
-      setAuthDialogOpen(true);
-    }
+    signInLocal(inputValue); // Use signInLocal to save the name
+    navigate('/chat', { state: { prompt: inputValue } });
   };
 
   const handleSignOut = async () => {
-    await signOut();
+    signOut(); // Use local signOut
+    setInputValue(""); // Clear input after sign out
   };
 
   const getUserFirstName = () => {
     if (!user) return '';
-    const fullName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
-    return fullName.split(' ')[0];
+    return user.name.split(' ')[0]; // Get name from local user object
   };
 
   return (
@@ -228,7 +232,7 @@ const Index = () => {
         </div>
       </footer>
 
-      <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
+      {/* AuthDialog is no longer rendered */}
     </div>
   );
 };
