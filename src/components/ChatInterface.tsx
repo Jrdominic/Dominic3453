@@ -136,16 +136,14 @@ export const ChatInterface = ({ initialPrompt, initialImage, onCodeGenerated, on
     const reader = new FileReader();
     reader.onloadend = () => {
       setSelectedImage(reader.result as string);
-      if (!input.includes('[Image Attached]')) {
-        setInput(prev => prev ? `[Image Attached] ${prev}` : '[Image Attached]');
-      }
+      toast.success('Image successfully attached', { icon: '✅' });
     };
     reader.readAsDataURL(file);
   };
 
   const removeSelectedImage = () => {
     setSelectedImage(null);
-    setInput(prev => prev.replace('[Image Attached]', '').trim());
+    // No need to modify input here as '[Image Attached]' is no longer added
   };
 
   return (

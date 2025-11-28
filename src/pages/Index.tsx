@@ -46,9 +46,7 @@ const Index = () => {
     const reader = new FileReader();
     reader.onloadend = () => {
       setSelectedImage(reader.result as string);
-      if (!inputValue.includes('[Image Attached]')) {
-        setInputValue(prev => prev ? `[Image Attached] ${prev}` : '[Image Attached]');
-      }
+      toast.success('Image successfully attached', { icon: '✅' });
     };
     reader.readAsDataURL(file);
   };
@@ -78,7 +76,7 @@ const Index = () => {
 
   const removeSelectedImage = () => {
     setSelectedImage(null);
-    setInputValue(prev => prev.replace('[Image Attached]', '').trim());
+    // No need to modify inputValue here as '[Image Attached]' is no longer added
   };
 
   const getUserFirstName = () => {
