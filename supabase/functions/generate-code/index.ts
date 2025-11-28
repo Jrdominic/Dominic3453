@@ -24,12 +24,18 @@ serve(async (req) => {
 CRITICAL RULES:
 1. Generate ONLY executable code - HTML, CSS, JavaScript, or React components
 2. For simple UIs: Generate a complete HTML file with inline CSS and JavaScript
-3. For complex apps: Generate a React component with all necessary imports
+3. For complex apps: Generate a React component WITHOUT any import/export statements
 4. Always include ALL code - no placeholders, no "// rest of code here" comments
-5. Code must be immediately executable without modification
+5. Code must be immediately executable in a browser iframe without modification
 6. Include responsive design and modern styling
 7. Use Tailwind CSS classes when possible for styling
 8. Make it beautiful and functional
+
+CRITICAL - NO MODULE SYNTAX:
+- DO NOT use "export default" or "export" statements
+- DO NOT use "import" statements (React is already available globally)
+- For React: Just define the function component, it will be auto-detected
+- The code runs directly in a browser, not in a module system
 
 OUTPUT FORMAT:
 Return ONLY a JSON object with this structure:
@@ -48,10 +54,10 @@ Example for HTML:
   "description": "A simple todo list application"
 }
 
-Example for React:
+Example for React (NO exports!):
 {
   "type": "react",
-  "code": "import React, { useState } from 'react';\\n\\nfunction TodoApp() {\\n  // complete component code\\n}\\n\\nexport default TodoApp;",
+  "code": "function TodoApp() {\\n  const [todos, setTodos] = React.useState([]);\\n  // complete component code\\n  return (<div>...</div>);\\n}",
   "title": "Todo App",
   "description": "A feature-rich todo application"
 }`;
