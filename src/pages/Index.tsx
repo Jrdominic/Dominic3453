@@ -1,7 +1,7 @@
 import { Plus, Paperclip, Palette, Mic, ArrowUp, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import sLogo from "@/assets/s-logo.png";
 import AnimatedBackground from "@/components/AnimatedBackground";
@@ -19,7 +19,7 @@ const Index = () => {
 
   const handleSendClick = () => {
     if (!inputValue.trim()) {
-      toast.error('Please enter a prompt');
+      toast.error(user ? 'Please enter a prompt' : 'Please type your name or a prompt');
       return;
     }
     if (user) {
@@ -55,21 +55,12 @@ const Index = () => {
             </button>
           </nav>
           <div className="flex items-center gap-3">
-            {user ? (
+            {user && ( // Only show user info and sign out if logged in
               <>
                 <span className="text-sm font-medium">{getUserFirstName()}'s Cortex</span>
                 <Button variant="ghost" size="sm" onClick={handleSignOut}>
                   <LogOut className="h-4 w-4 mr-2" />
                   Sign Out
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button variant="ghost" className="text-sm" onClick={() => setAuthDialogOpen(true)}>
-                  Log in
-                </Button>
-                <Button className="bg-foreground text-background hover:bg-foreground/90 text-sm" onClick={() => setAuthDialogOpen(true)}>
-                  Get started
                 </Button>
               </>
             )}
@@ -114,7 +105,7 @@ const Index = () => {
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Ask Cortex to create a blog about..."
+                placeholder={user ? "Ask Cortex to create a blog about..." : "Type Your name"}
                 className="flex-1 bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
               />
 
