@@ -14,9 +14,11 @@ interface ChatInterfaceProps {
   initialPrompt?: string;
   onCodeGenerated: (codeData: { code: string; type: 'html' | 'react'; title: string; description: string }) => void;
   onGeneratingStart: () => void;
+  fixErrorsPrompt?: string | null;
+  onFixErrorsHandled?: () => void;
 }
 
-export const ChatInterface = ({ initialPrompt, onCodeGenerated, onGeneratingStart }: ChatInterfaceProps) => {
+export const ChatInterface = ({ initialPrompt, onCodeGenerated, onGeneratingStart, fixErrorsPrompt, onFixErrorsHandled }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -36,6 +38,17 @@ export const ChatInterface = ({ initialPrompt, onCodeGenerated, onGeneratingStar
       sendMessage(initialPrompt);
     }
   }, []);
+
+  useEffect(() => {
+    if (fixErrorsPrompt) {
+      // Add "Fixing Errors" status message
+      setMessages(prev => [...prev, { role: 'status', content: 'Fixing Errors' }]);
+      setTimeout(() => {
+        sendMessage(fixErrorsPrompt);
+        onFixErrorsHandled?.();
+      }, 100);
+    }
+  }, [fixErrorsPrompt]);
 
   const sendMessage = async (messageText?: string) => {
     const text = messageText || input;

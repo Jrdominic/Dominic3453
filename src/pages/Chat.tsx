@@ -16,6 +16,7 @@ const Chat = () => {
   const [generatedCode, setGeneratedCode] = useState({ code: '', type: 'html' as 'html' | 'react', title: '', description: '' });
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState('preview');
+  const [fixErrorsPrompt, setFixErrorsPrompt] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -43,6 +44,11 @@ const Chat = () => {
 
   const handleGeneratingStart = () => {
     setIsGenerating(true);
+  };
+
+  const handleFixErrors = (errors: string[]) => {
+    const errorSummary = errors.join('\n');
+    setFixErrorsPrompt(`Fix these errors in the code:\n${errorSummary}`);
   };
 
   if (isLoading) {
@@ -79,6 +85,8 @@ const Chat = () => {
             initialPrompt={initialPrompt} 
             onCodeGenerated={handleCodeGenerated}
             onGeneratingStart={handleGeneratingStart}
+            fixErrorsPrompt={fixErrorsPrompt}
+            onFixErrorsHandled={() => setFixErrorsPrompt(null)}
           />
         </div>
         
@@ -99,7 +107,12 @@ const Chat = () => {
             </div>
             
             <TabsContent value="preview" className="flex-1 m-0 overflow-hidden">
-              <PreviewPanel code={generatedCode.code} type={generatedCode.type} isLoading={isGenerating} />
+              <PreviewPanel 
+                code={generatedCode.code} 
+                type={generatedCode.type} 
+                isLoading={isGenerating}
+                onFixErrors={handleFixErrors}
+              />
             </TabsContent>
             
             <TabsContent value="code" className="flex-1 m-0 overflow-hidden">
