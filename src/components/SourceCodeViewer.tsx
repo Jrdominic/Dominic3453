@@ -7,12 +7,74 @@ import { DownloadProjectButton } from './DownloadProjectButton';
 import { projectFiles } from '@/utils/projectFiles';
 import type { ProjectFile } from '@/utils/projectFiles'; // type‑only import
 
-// Use the generated list of real source files
+/* ---------- Source files list ---------- */
 const sourceFiles: ProjectFile[] = projectFiles;
 
+/* ---------- SourceCodeViewer component ---------- */
 export const SourceCodeViewer = () => {
-  // (implementation unchanged – omitted for brevity)
-  /* ... existing SourceCodeViewer component code ... */
+  const [selectedFile, setSelectedFile] = useState<ProjectFile | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    if (!selectedFile) return;
+    try {
+      await navigator.clipboard.writeText(selectedFile.content);
+      setCopied(true);
+      toast.success('File copied to clipboard');
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error('Failed to copy file');
+    }
+  };
+
+  return (
+    <div className="flex h-full overflow-hidden">
+      {/* File list pane */}
+      <div className="w-64 border-r bg-muted/30 p-2 overflow-y-auto">
+        {sourceFiles.map((file) => (
+          <div
+            key={file.path}
+            className={`p-1 cursor-pointer rounded hover:bg-muted/50 ${
+              selectedFile?.path === file.path ? 'bg-muted' : ''
+            }`}
+            onClick={() => setSelectedFile(file)}
+          >
+            {file.name}
+          </div>
+        ))}
+      </div>
+
+      {/* Code view pane */}
+      <div className="flex-1 flex flex-col p-4 overflow-auto">
+        {selectedFile ? (
+          <>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-semibold">{selectedFile.name}</h3>
+              <Button size="sm" onClick={handleCopy} className="gap-2">
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {copied ? 'Copied' : 'Copy'}
+              </Button>
+            </div>
+            <pre className="flex-1 bg-muted p-2 rounded overflow-auto text-sm">
+              <code className={`language-${selectedFile.language}`}>
+                {selectedFile.content}
+              </code>
+            </pre>
+          </>
+        ) : (
+          <p className="text-muted-foreground">Select a file to view its source</p>
+        )}
+
+        {/* Download button – always available */}
+        <div className="mt-4">
+          <DownloadProjectButton
+            files={sourceFiles.map((f) => ({ path: f.path, content: f.content }))}
+            projectName="cortex-project"
+          />
+        </div>
+      </div>
+    </div>
+  );
 };
 
 /* ------------------------------------------------------------------ */
@@ -27,6 +89,7 @@ export const SourceCodeDialog = () => {
           Source Code
         </button>
       </DialogTrigger>
+
       <DialogContent className="max-w-6xl max-h-[90vh] p-0 overflow-hidden">
         <div className="h-full flex flex-col">
           <DialogHeader className="px-6 py-4 border-b">
@@ -35,6 +98,7 @@ export const SourceCodeDialog = () => {
               Project Source Code
             </DialogTitle>
           </DialogHeader>
+
           <div className="flex-1 overflow-hidden">
             <SourceCodeViewer />
           </div>
@@ -44,6 +108,5 @@ export const SourceCodeDialog = () => {
   );
 };
 
-/* Export both as a named export and as the default export */
+/* Export as default (also provides the named export above) */
 export default SourceCodeDialog;
-export { SourceCodeDialog };
