@@ -4,34 +4,24 @@ import { basename, extname } from '@/lib/pathUtils';
 export interface ProjectFile {
   name: string;      // e.g. App.tsx or tailwind.config.ts
   path: string;      // repo‑relative path, e.g. src/App.tsx
-  content: string;    // raw file contents
+  content: string;   // raw file contents as a plain string
   language: string;   // Prism language hint (tsx, jsx, css, markup, json, markdown, etc.)
 }
 
-/**
- * Vite’s `import.meta.glob` loads modules at build time.
- * - `../../**/*` walks the whole repository (utils → src → project root).
- * - `ignore` excludes heavy or irrelevant folders.
- * - `as: 'raw'` returns the file contents as plain strings.
- * - `eager: true` imports everything immediately so we can map it right away.
- */
-const rawModules = import.meta.glob('../../**/*', {
-  as: 'raw',
-  eager: true,
-  ignore: [
-    '**/node_modules/**',
-    '**/dist/**',
-    '**/.git/**',
-    '**/.vscode/**',
-    '**/.next/**',
-    '**/.cache/**',
-    '**/.DS_Store',
-    '**/*.log',
-    '**/package-lock.json',
-    '**/yarn.lock',
-    '**/pnpm-lock.yaml',
-  ],
-}) as Record<string, string>;
+/*
+  Vite’s import.meta.glob loads modules at build time.
+  - '../../**/*' walks the whole repository (utils → src → project root)
+  - as: 'raw' returns the file contents as plain strings
+  - eager: true imports everything immediately so we can map it right away
+  The glob captures the most common source file extensions.
+*/
+const rawModules = import.meta.glob(
+  '../../**/*.{ts,tsx,js,jsx,css,html,json,md,svg}',
+  {
+    as: 'raw',
+    eager: true,
+  }
+) as Record<string, string>;
 
 /** Map a file extension to a Prism language identifier */
 function mapExtToLang(ext: string): string {
@@ -64,11 +54,10 @@ function mapExtToLang(ext: string): string {
   }
 }
 
-/** Exported array of every (non‑ignored) file in the repository */
+/** Exported array containing every (non‑ignored) file in the repository */
 export const projectFiles: ProjectFile[] = Object.entries(rawModules).map(
   ([filePath, content]) => {
-    // `filePath` looks like “…/src/components/Button.tsx”.
-    // Strip any leading “…/” segments to get a clean repo‑relative path.
+    // Strip leading “…/” segments to get a clean repo‑relative path.
     const relativePath = filePath.replace(/^(\.\.\/)+/, '');
     const name = basename(filePath);
     const ext = extname(filePath);
