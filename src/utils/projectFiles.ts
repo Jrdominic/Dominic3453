@@ -10,9 +10,9 @@ export interface ProjectFile {
 
 /*
   Vite’s import.meta.glob loads modules at build time.
-  - '../../**/*' walks the whole repository (utils → src → project root)
-  - as: 'raw' returns the file contents as plain strings
-  - eager: true imports everything immediately so we can map it right away
+  - The glob pattern '../../**/*' walks the entire repository (utils → src → project root).
+  - `as: 'raw'` returns file contents as plain strings.
+  - `eager: true` imports everything immediately for mapping.
   The glob captures the most common source file extensions.
 */
 const rawModules = import.meta.glob(
@@ -56,15 +56,15 @@ function mapExtToLang(ext: string): string {
 
 /** Exported array containing every (non‑ignored) file in the repository */
 export const projectFiles: ProjectFile[] = Object.entries(rawModules).map(
-  ([filePath, content]) => {
-    // Remove leading “…/” segments to get a clean repo‑relative path.
+  ([filePath, fileContent]) => {
+    // Remove any leading "../" segments to get a clean repository‑relative path.
     const relativePath = filePath.replace(/^(\.\.\/)+/, '');
     const name = basename(filePath);
     const ext = extname(filePath);
     return {
       name,
       path: relativePath,
-      content,
+      content: fileContent, // guaranteed to be a string by the `as: 'raw'` typing
       language: mapExtToLang(ext),
     };
   }
