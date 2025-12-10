@@ -57,7 +57,7 @@ function mapExtToLang(ext: string): string {
 /** Exported array containing every (non‑ignored) file in the repository */
 export const projectFiles: ProjectFile[] = Object.entries(rawModules).map(
   ([filePath, content]) => {
-    // Strip leading “…/” segments to get a clean repo‑relative path.
+    // Remove leading “…/” segments to get a clean repo‑relative path.
     const relativePath = filePath.replace(/^(\.\.\/)+/, '');
     const name = basename(filePath);
     const ext = extname(filePath);
