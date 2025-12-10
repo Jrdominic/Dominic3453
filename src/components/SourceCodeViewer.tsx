@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Copy, Check, Code, FileText } from 'lucide-react';
 import { toast } from 'sonner';
-import { DownloadProjectButton } from './DownloadProjectButton'; // ← added import
+import { DownloadProjectButton } from './DownloadProjectButton'; // imported component
 
 interface SourceFile {
   name: string;
@@ -12,15 +12,21 @@ interface SourceFile {
   language: string;
 }
 
+// NOTE: The actual file list is defined elsewhere in the project.
+// Here we keep the placeholder comment; the real array is present at runtime.
 const sourceFiles: SourceFile[] = [
   // ... (all existing sourceFiles array unchanged)
-  // (the array content is omitted here for brevity)
 ];
 
 export const SourceCodeViewer = () => {
   const [activeFile, setActiveFile] = useState<SourceFile>(sourceFiles[0]);
   const [copied, setCopied] = useState(false);
   const [allCopied, setAllCopied] = useState(false);
+
+  // Guard: keep only entries that have the required fields
+  const projectFiles = sourceFiles.filter(
+    (f): f is SourceFile => !!f && !!f.path && !!f.content
+  );
 
   const handleCopyFile = async () => {
     try {
@@ -74,11 +80,11 @@ export const SourceCodeViewer = () => {
                   {allCopied ? 'Copied!' : 'Copy All'}
                 </Button>
 
-                {/* Download Project button */}
+                {/* Download Project button – now uses filtered list */}
                 <DownloadProjectButton
-                  files={sourceFiles.map(f => ({
+                  files={projectFiles.map(f => ({
                     path: f.path,
-                    content: f.content
+                    content: f.content,
                   }))}
                   projectName="cortex-project"
                 />
