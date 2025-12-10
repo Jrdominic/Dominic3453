@@ -1,4 +1,4 @@
-import { extname, basename } from 'path';
+import { extname, basename } from "@/lib/pathUtils";
 
 /** Shape of a source file that the app can display / download */
 export interface ProjectFile {
@@ -20,22 +20,22 @@ const rawModules = (import.meta as any).globEager('../src/**/*.{ts,tsx,js,jsx,cs
 /** Map a file extension to a Prism language identifier. */
 function mapExtToLang(ext: string): string {
   switch (ext) {
-    case '.tsx':
-    case '.ts':
-      return 'tsx';
-    case '.jsx':
-    case '.js':
-      return 'jsx';
-    case '.css':
-      return 'css';
-    case '.html':
-      return 'markup';
-    case '.json':
-      return 'json';
-    case '.md':
-      return 'markdown';
+    case ".tsx":
+    case ".ts":
+      return "tsx";
+    case ".jsx":
+    case ".js":
+      return "jsx";
+    case ".css":
+      return "css";
+    case ".html":
+      return "markup";
+    case ".json":
+      return "json";
+    case ".md":
+      return "markdown";
     default:
-      return 'text';
+      return "text";
   }
 }
 
@@ -44,7 +44,7 @@ export const projectFiles: ProjectFile[] = Object.entries(rawModules).map(
   ([filePath, content]) => {
     // Vite gives paths like “…/src/components/Button.tsx”.
     // Strip the leading “…/” to get a clean project‑relative path.
-    const relativePath = filePath.replace(/^\.{2}\//, '');
+    const relativePath = filePath.replace(/^\.{2}\//, "");
     const name = basename(filePath);
     const ext = extname(filePath);
     return {
