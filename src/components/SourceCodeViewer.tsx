@@ -19,16 +19,19 @@ const sourceFiles: SourceFile[] = [
 ];
 
 export const SourceCodeViewer = () => {
-  const [activeFile, setActiveFile] = useState<SourceFile>(sourceFiles[0]);
-  const [copied, setCopied] = useState(false);
-  const [allCopied, setAllCopied] = useState(false);
-
-  // Guard: keep only entries that have the required fields
+  // Guard: keep only valid entries
   const projectFiles = sourceFiles.filter(
     (f): f is SourceFile => !!f && !!f.path && !!f.content
   );
 
+  const [activeFile, setActiveFile] = useState<SourceFile | null>(
+    projectFiles.length ? projectFiles[0] : null
+  );
+  const [copied, setCopied] = useState(false);
+  const [allCopied, setAllCopied] = useState(false);
+
   const handleCopyFile = async () => {
+    if (!activeFile) return;
     try {
       await navigator.clipboard.writeText(activeFile.content);
       setCopied(true);
@@ -41,8 +44,8 @@ export const SourceCodeViewer = () => {
 
   const handleCopyAll = async () => {
     try {
-      const allCode = sourceFiles
-        .map(file => `/* === ${file.path} === */\n${file.content}`)
+      const allCode = projectFiles
+        .map(f => `/* === ${f.path} === */\n${f.content}`)
         .join('\n\n');
       await navigator.clipboard.writeText(allCode);
       setAllCopied(true);
@@ -52,6 +55,15 @@ export const SourceCodeViewer = () => {
       toast.error('Failed to copy all code');
     }
   };
+
+  // If there are no files, show a simple empty state
+  if (projectFiles.length === 0) {
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        No source files available.
+      </div>
+    );
+  }
 
   return (
     <div className="h-[80vh] flex flex-col">
@@ -65,7 +77,7 @@ export const SourceCodeViewer = () => {
                 Project Files
               </h3>
               <div className="flex gap-2">
-                {/* Copy All button */}
+                {/* Copy All */}
                 <Button
                   size="sm"
                   variant="outline"
@@ -80,7 +92,7 @@ export const SourceCodeViewer = () => {
                   {allCopied ? 'Copied!' : 'Copy All'}
                 </Button>
 
-                {/* Download Project button – now uses filtered list */}
+                {/* Download Project */}
                 <DownloadProjectButton
                   files={projectFiles.map(f => ({
                     path: f.path,
@@ -91,12 +103,13 @@ export const SourceCodeViewer = () => {
               </div>
             </div>
 
+            {/* File list */}
             <div className="space-y-1">
-              {sourceFiles.map((file) => (
+              {projectFiles.map((file) => (
                 <button
                   key={file.path}
                   className={`w-full text-left px-2 py-1.5 rounded text-sm transition-colors ${
-                    activeFile.path === file.path
+                    activeFile?.path === file.path
                       ? 'bg-primary text-primary-foreground'
                       : 'hover:bg-muted'
                   }`}
@@ -118,7 +131,7 @@ export const SourceCodeViewer = () => {
             <div>
               <h2 className="text-base font-semibold flex items-center gap-2">
                 <Code className="h-4 w-4" />
-                {activeFile.path}
+                {activeFile?.path ?? 'Select a file'}
               </h2>
               <p className="text-xs text-muted-foreground">
                 Click to copy file content
@@ -141,7 +154,7 @@ export const SourceCodeViewer = () => {
           <div className="flex-1 overflow-hidden bg-muted/20">
             <pre className="h-full overflow-auto p-4 text-sm" style={{ lineHeight: '1.5' }}>
               <code className="font-mono whitespace-pre">
-                {activeFile.content}
+                {activeFile?.content ?? ''}
               </code>
             </pre>
           </div>
