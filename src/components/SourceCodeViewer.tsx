@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { CodePanel } from './CodePanel';
+import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { Copy, Check, Code } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface SourceFile {
   name: string;
@@ -1306,7 +1308,7 @@ export const AuthDialog = ({ open, onOpenChange, initialIsSignUp = true }: AuthD
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={setOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center">
@@ -1406,11 +1408,250 @@ export const generateCode = async (payload: GenerateCodePayload): Promise<Genera
   
   return response.json();
 };`
+  },
+  {
+    name: 'AnimatedBackground.tsx',
+    path: 'src/components/AnimatedBackground.tsx',
+    language: 'tsx',
+    content: `import { useEffect, useRef } from "react";
+
+interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  size: number;
+}
+
+const AnimatedBackground = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const particlesRef = useRef<Particle[]>([]);
+  const mouseRef = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+
+    // Create particles
+    const particleCount = 50;
+    particlesRef.current = Array.from({ length: particleCount }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.5,
+      vy: (Math.random() - 0.5) * 0.5,
+      size: Math.random() * 3 + 2,
+    }));
+
+    // Mouse move handler
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseRef.current = { x: e.clientX, y: e.clientY };
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+
+    // Animation loop
+    let animationFrameId: number;
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      particlesRef.current.forEach((particle, i) => {
+        // Update position
+        particle.x += particle.vx;
+        particle.y += particle.vy;
+
+        // Bounce off edges
+        if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
+        if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
+
+        // Mouse interaction
+        const dx = mouseRef.current.x - particle.x;
+        const dy = mouseRef.current.y - particle.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < 150) {
+          const force = (150 - distance) / 150;
+          particle.vx -= (dx / distance) * force * 0.2;
+          particle.vy -= (dy / distance) * force * 0.2;
+        }
+
+        // Limit velocity
+        const speed = Math.sqrt(particle.vx * particle.vx + particle.vy * particle.vy);
+        if (speed > 2) {
+          particle.vx = (particle.vx / speed) * 2;
+          particle.vy = (particle.vy / speed) * 2;
+        }
+
+        // Draw particle with purple gradient
+        const gradient = ctx.createRadialGradient(
+          particle.x,
+          particle.y,
+          0,
+          particle.x,
+          particle.y,
+          particle.size * 2
+        );
+        gradient.addColorStop(0, "rgba(168, 85, 247, 0.8)");
+        gradient.addColorStop(1, "rgba(168, 85, 247, 0)");
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size * 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw connections
+        particlesRef.current.forEach((otherParticle, j) => {
+          if (i === j) return;
+
+          const dx = particle.x - otherParticle.x;
+          const dy = particle.y - otherParticle.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < 100) {
+            ctx.strokeStyle = \`rgba(168, 85, 247, \${0.2 * (1 - distance / 100)})\`;
+            ctx.lineWidth = 0.5;
+            ctx.beginPath();
+            ctx.moveTo(particle.x, particle.y);
+            ctx.lineTo(otherParticle.x, otherParticle.y);
+            ctx.stroke();
+          }
+        });
+      });
+
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      window.removeEventListener("resize", resizeCanvas);
+      window.removeEventListener("mousemove", handleMouseMove);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="fixed inset-0 pointer-events-none z-0"
+      style={{ opacity: 0.6 }}
+    />
+  );
+};
+
+export default AnimatedBackground;`
+  },
+  {
+    name: 'useScrollAnimation.tsx',
+    path: 'src/hooks/useScrollAnimation.tsx',
+    language: 'tsx',
+    content: `import { useEffect, useRef, useState } from "react";
+
+export const useScrollAnimation = () => {
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        }
+      },
+      {
+        threshold: 0.1,
+      }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => {
+      if (ref.current) {
+        observer.unobserve(ref.current);
+      }
+    };
+  }, []);
+
+  return { ref, isVisible };
+};`
+  },
+  {
+    name: 'NavLink.tsx',
+    path: 'src/components/NavLink.tsx',
+    language: 'tsx',
+    content: `import { NavLink as RouterNavLink, NavLinkProps } from "react-router-dom";
+import { forwardRef } from "react";
+import { cn } from "@/lib/utils";
+
+interface NavLinkCompatProps extends Omit<NavLinkProps, "className"> {
+  className?: string;
+  activeClassName?: string;
+  pendingClassName?: string;
+}
+
+const NavLink = forwardRef<HTMLAnchorElement, NavLinkCompatProps>(
+  ({ className, activeClassName, pendingClassName, to, ...props }, ref) => {
+    return (
+      <RouterNavLink
+        ref={ref}
+        to={to}
+        className={({ isActive, isPending }) =>
+          cn(className, isActive && activeClassName, isPending && pendingClassName)
+        }
+        {...props}
+      />
+    );
+  }
+);
+
+NavLink.displayName = "NavLink";
+
+export { NavLink };`
   }
 ];
 
 export const SourceCodeViewer = () => {
   const [activeFile, setActiveFile] = useState<SourceFile>(sourceFiles[0]);
+  const [copied, setCopied] = useState(false);
+  const [allCopied, setAllCopied] = useState(false);
+
+  const handleCopyFile = async () => {
+    try {
+      await navigator.clipboard.writeText(activeFile.content);
+      setCopied(true);
+      toast.success('File copied to clipboard');
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      toast.error('Failed to copy file');
+    }
+  };
+
+  const handleCopyAll = async () => {
+    try {
+      // Create a single string with all files and their content
+      const allCode = sourceFiles.map(file => 
+        '/* === ' + file.path + ' === */\n' + file.content
+      ).join('\n\n');
+      
+      await navigator.clipboard.writeText(allCode);
+      setAllCopied(true);
+      toast.success('All code copied to clipboard');
+      setTimeout(() => setAllCopied(false), 2000);
+    } catch (err) {
+      toast.error('Failed to copy all code');
+    }
+  };
 
   return (
     <div className="h-[80vh] flex flex-col">
@@ -1418,19 +1659,30 @@ export const SourceCodeViewer = () => {
         {/* File Tree */}
         <div className="w-64 border-r bg-muted/30 overflow-y-auto">
           <div className="p-4">
-            <h3 className="text-sm font-semibold mb-2">Project Files</h3>
-            <div className="space-y-1">
-              {sourceFiles.map((file) => (
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold">Project Files</h3>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={handleCopyAll}
+                className="gap-2 text-xs transition-all duration-300 hover:scale-105"
+              >
+                {allCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                {allCopied ? 'Copied!' : 'Copy All'}
+              </Button>
+            </div>
+            <div className="space-y-1 animate-fade-in">
+              {sourceFiles.map((file, index) => (
                 <button
                   key={file.path}
-                  className={
-                    activeFile.path === file.path 
-                      ? "w-full text-left px-2 py-1.5 rounded text-sm bg-primary text-primary-foreground" 
-                      : "w-full text-left px-2 py-1.5 rounded text-sm hover:bg-muted"
-                  }
+                  className={'w-full text-left px-2 py-1.5 rounded text-sm transition-all duration-200 hover:scale-[1.02] ' + (activeFile.path === file.path ? 'bg-primary text-primary-foreground shadow-lg' : 'hover:bg-muted')}
                   onClick={() => setActiveFile(file)}
+                  style={{ animationDelay: (index * 50) + 'ms' }}
                 >
-                  {file.name}
+                  <div className="flex items-center gap-2">
+                    <Code className="h-4 w-4" />
+                    <span className="truncate">{file.name}</span>
+                  </div>
                 </button>
               ))}
             </div>
@@ -1439,15 +1691,30 @@ export const SourceCodeViewer = () => {
         
         {/* Code Display */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="border-b px-4 py-2 bg-background/50">
-            <h2 className="text-sm font-medium">{activeFile.path}</h2>
+          <div className="border-b px-4 py-3 bg-background/50 flex items-center justify-between animate-slide-down">
+            <div>
+              <h2 className="text-base font-semibold flex items-center gap-2">
+                <Code className="h-4 w-4" />
+                {activeFile.path}
+              </h2>
+              <p className="text-xs text-muted-foreground">Click to copy file content</p>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleCopyFile}
+              className="gap-2 transition-all duration-300 hover:scale-105"
+            >
+              {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+              {copied ? 'Copied' : 'Copy'}
+            </Button>
           </div>
-          <div className="flex-1 overflow-hidden">
-            <CodePanel 
-              code={activeFile.content} 
-              language={activeFile.language} 
-              fileName={activeFile.name} 
-            />
+          <div className="flex-1 overflow-hidden bg-muted/20 animate-fade-in">
+            <pre className="h-full overflow-auto p-4 text-sm" style={{ lineHeight: '1.5' }}>
+              <code className="font-mono whitespace-pre">
+                {activeFile.content}
+              </code>
+            </pre>
           </div>
         </div>
       </div>
@@ -1461,15 +1728,22 @@ export const SourceCodeDialog = () => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <button className="text-sm text-muted-foreground hover:text-foreground transition-all duration-300 hover:scale-105">
           Source Code
         </button>
       </DialogTrigger>
-      <DialogContent className="max-w-6xl max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle>Project Source Code</DialogTitle>
-        </DialogHeader>
-        <SourceCodeViewer />
+      <DialogContent className="max-w-6xl max-h-[90vh] p-0 overflow-hidden rounded-lg shadow-2xl animate-zoom-in">
+        <div className="h-full flex flex-col">
+          <DialogHeader className="px-6 py-4 border-b">
+            <DialogTitle className="flex items-center gap-2">
+              <Code className="h-5 w-5" />
+              Project Source Code
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden">
+            <SourceCodeViewer />
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
