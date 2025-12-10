@@ -7,7 +7,8 @@ import sLogo from "@/assets/s-logo.png";
 import AnimatedBackground from "@/components/AnimatedBackground";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { AuthDialog } from "@/components/AuthDialog";
-import { useAuth } from "@/hooks/useAuth"; // Use the updated auth hook
+import { useAuth } from "@/hooks/useAuth";
+import { SourceCodeDialog } from "@/components/SourceCodeViewer";
 import { toast } from "sonner";
 
 const Index = () => {
@@ -15,7 +16,7 @@ const Index = () => {
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [isSignUpMode, setIsSignUpMode] = useState(true);
   const { ref: howItWorksRef, isVisible: howItWorksVisible } = useScrollAnimation();
-  const { user, isLoading } = useAuth(); // Use the updated auth hook
+  const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -66,7 +67,7 @@ const Index = () => {
           const file = items[i].getAsFile();
           if (file) {
             readImageFile(file);
-            event.preventDefault(); // Prevent default paste behavior for image
+            event.preventDefault();
             return;
           }
         }
@@ -97,40 +98,32 @@ const Index = () => {
             <button className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Pricing
             </button>
+            <SourceCodeDialog />
           </nav>
         </div>
         <div className="flex items-center gap-3">
           {user ? (
             <>
               <span className="text-sm font-medium">{getUserFirstName()}'s Cortex</span>
-              {/* No Sign Out button as per user request */}
             </>
           ) : (
             <>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setIsSignUpMode(false);
-                  setAuthDialogOpen(true);
-                }}
-              >
+              <Button variant="ghost" size="sm" onClick={() => {
+                setIsSignUpMode(false);
+                setAuthDialogOpen(true);
+              }}>
                 Login
               </Button>
-              <Button
-                size="sm"
-                onClick={() => {
-                  setIsSignUpMode(true);
-                  setAuthDialogOpen(true);
-                }}
-              >
+              <Button size="sm" onClick={() => {
+                setIsSignUpMode(true);
+                setAuthDialogOpen(true);
+              }}>
                 Get Started
               </Button>
             </>
           )}
         </div>
       </header>
-
       <main className="flex flex-1 flex-col items-center justify-center px-4 py-16 relative z-10">
         <div className="w-full max-w-3xl space-y-8 text-center">
           <div className="flex justify-center">
@@ -140,7 +133,6 @@ const Index = () => {
               <span>→</span>
             </Badge>
           </div>
-
           <div className="space-y-6 animate-fade-in">
             <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl animate-float">
               Build something
@@ -149,7 +141,6 @@ const Index = () => {
               <img src={sLogo} alt="Logo" className="h-20 w-20 sm:h-24 sm:w-24 md:h-32 md:w-32 lg:h-40 lg:w-40" />
             </div>
           </div>
-
           <div className="mx-auto w-full max-w-2xl animate-fade-in animate-float">
             {selectedImage && (
               <div className="relative mb-4 p-2 border rounded-md bg-muted flex items-center justify-between">
@@ -160,14 +151,9 @@ const Index = () => {
               </div>
             )}
             <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-lg transition-all hover:border-border/60 focus-within:border-primary/50 hover:shadow-xl hover:-translate-y-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground hover:bg-transparent"
-              >
+              <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground hover:bg-transparent">
                 <Plus className="h-5 w-5" />
               </Button>
-
               <input
                 type="text"
                 value={inputValue}
@@ -182,7 +168,6 @@ const Index = () => {
                 placeholder="Ask Cortex to create a blog about..."
                 className="flex-1 bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
               />
-
               <div className="flex items-center gap-2 shrink-0">
                 <input
                   type="file"
@@ -199,23 +184,12 @@ const Index = () => {
                 >
                   <Paperclip className="h-5 w-5" />
                 </Button>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-transparent"
-                >
+                <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-transparent">
                   <Palette className="h-5 w-5" />
                 </Button>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-transparent"
-                >
+                <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-transparent">
                   <Mic className="h-5 w-5" />
                 </Button>
-
                 <Button
                   size="icon"
                   onClick={handleSendClick}
@@ -228,13 +202,11 @@ const Index = () => {
           </div>
         </div>
       </main>
-
       <section ref={howItWorksRef} className="border-t border-border px-6 py-16 relative z-10">
         <div className="mx-auto max-w-7xl">
           <h2 className={`text-4xl font-bold text-center text-foreground mb-12 ${howItWorksVisible ? 'animate-fade-in animate-float' : 'opacity-0'}`}>
             How it works
           </h2>
-          
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className={`rounded-2xl border border-border bg-card p-8 flex flex-col items-center text-center space-y-4 transition-all duration-700 hover:scale-105 hover:shadow-2xl hover:border-primary/50 ${howItWorksVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
               <div className="text-primary text-5xl">
@@ -248,7 +220,6 @@ const Index = () => {
                 Tell the AI what features you want in plain English.
               </p>
             </div>
-
             <div className={`rounded-2xl border border-border bg-card p-8 flex flex-col items-center text-center space-y-4 transition-all duration-700 hover:scale-105 hover:shadow-2xl hover:border-purple/50 ${howItWorksVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
               <div className="text-purple text-5xl">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -263,7 +234,6 @@ const Index = () => {
                 The AI instantly writes and modifies your project's codebase.
               </p>
             </div>
-
             <div className={`rounded-2xl border border-border bg-card p-8 flex flex-col items-center text-center space-y-4 transition-all duration-700 hover:scale-105 hover:shadow-2xl hover:border-primary/50 ${howItWorksVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
               <div className="text-primary text-5xl">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -279,7 +249,6 @@ const Index = () => {
           </div>
         </div>
       </section>
-
       <footer className="border-t border-border px-6 py-8 relative z-10">
         <div className="mx-auto max-w-7xl flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
@@ -298,7 +267,6 @@ const Index = () => {
           </div>
         </div>
       </footer>
-
       <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} initialIsSignUp={isSignUpMode} />
     </div>
   );
