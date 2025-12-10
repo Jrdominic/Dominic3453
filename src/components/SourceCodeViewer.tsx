@@ -1,7 +1,5 @@
 import { useState } from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { CodePanel } from './CodePanel';
-import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 
 interface SourceFile {
@@ -166,6 +164,7 @@ import AnimatedBackground from "@/components/AnimatedBackground";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { AuthDialog } from "@/components/AuthDialog";
 import { useAuth } from "@/hooks/useAuth";
+import { SourceCodeDialog } from "@/components/SourceCodeViewer";
 import { toast } from "sonner";
 
 const Index = () => {
@@ -255,9 +254,7 @@ const Index = () => {
             <button className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Pricing
             </button>
-            <button className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Source Code
-            </button>
+            <SourceCodeDialog />
           </nav>
         </div>
         <div className="flex items-center gap-3">
@@ -1426,135 +1423,11 @@ export const SourceCodeViewer = () => {
               {sourceFiles.map((file) => (
                 <button
                   key={file.path}
-                  className={\`w-full text-left px-2 py-1.5 rounded text-sm \${activeFile.path === file.path ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}\`}
-                  onClick={() => setActiveFile(file)}
-                >
-                  {file.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-        
-        {/* Code Display */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="border-b px-4 py-2 bg-background/50">
-            <h2 className="text-sm font-medium">{activeFile.path}</h2>
-          </div>
-          <div className="flex-1 overflow-hidden">
-            <CodePanel 
-              code={activeFile.content} 
-              language={activeFile.language} 
-              fileName={activeFile.name} 
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export const SourceCodeDialog = () => {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <button className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-          Source Code
-        </button>
-      </DialogTrigger>
-      <DialogContent className="max-w-6xl max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle>Project Source Code</DialogTitle>
-        </DialogHeader>
-        <SourceCodeViewer />
-      </DialogContent>
-    </Dialog>
-  );
-};`
-  }
-];
-
-export const SourceCodeViewer = () => {
-  const [activeFile, setActiveFile] = useState<SourceFile>(sourceFiles[0]);
-
-  return (
-    <div className="h-[80vh] flex flex-col">
-      <div className="flex-1 flex overflow-hidden">
-        {/* File Tree */}
-        <div className="w-64 border-r bg-muted/30 overflow-y-auto">
-          <div className="p-4">
-            <h3 className="text-sm font-semibold mb-2">Project Files</h3>
-            <div className="space-y-1">
-              {sourceFiles.map((file) => (
-                <button
-                  key={file.path}
-                  className={`w-full text-left px-2 py-1.5 rounded text-sm ${activeFile.path === file.path ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
-                  onClick={() => setActiveFile(file)}
-                >
-                  {file.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-        
-        {/* Code Display */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="border-b px-4 py-2 bg-background/50">
-            <h2 className="text-sm font-medium">{activeFile.path}</h2>
-          </div>
-          <div className="flex-1 overflow-hidden">
-            <CodePanel 
-              code={activeFile.content} 
-              language={activeFile.language} 
-              fileName={activeFile.name} 
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export const SourceCodeDialog = () => {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <button className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-          Source Code
-        </button>
-      </DialogTrigger>
-      <DialogContent className="max-w-6xl max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle>Project Source Code</DialogTitle>
-        </DialogHeader>
-        <SourceCodeViewer />
-      </DialogContent>
-    </Dialog>
-  );
-};`
-  }
-];
-
-export const SourceCodeViewer = () => {
-  const [activeFile, setActiveFile] = useState<SourceFile>(sourceFiles[0]);
-
-  return (
-    <div className="h-[80vh] flex flex-col">
-      <div className="flex-1 flex overflow-hidden">
-        {/* File Tree */}
-        <div className="w-64 border-r bg-muted/30 overflow-y-auto">
-          <div className="p-4">
-            <h3 className="text-sm font-semibold mb-2">Project Files</h3>
-            <div className="space-y-1">
-              {sourceFiles.map((file) => (
-                <button
-                  key={file.path}
-                  className={`w-full text-left px-2 py-1.5 rounded text-sm ${activeFile.path === file.path ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
+                  className={
+                    activeFile.path === file.path 
+                      ? "w-full text-left px-2 py-1.5 rounded text-sm bg-primary text-primary-foreground" 
+                      : "w-full text-left px-2 py-1.5 rounded text-sm hover:bg-muted"
+                  }
                   onClick={() => setActiveFile(file)}
                 >
                   {file.name}
