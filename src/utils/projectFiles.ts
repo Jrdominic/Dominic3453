@@ -9,11 +9,12 @@ export interface ProjectFile {
 }
 
 /**
- * Vite replaces `import.meta.globEager` at build time.
+ * Vite’s `import.meta.glob` loads modules at build time.
+ * We use the `eager` option so the files are imported immediately
+ * and the `as: 'raw'` option to get the file contents as plain strings.
  * The pattern searches all source files under the `src/` directory.
- * Files are imported as raw strings (`as: 'raw'`) and eagerly loaded.
  */
-const rawModules = (import.meta as any).globEager('../**/*.{ts,tsx,js,jsx,css,html,json,md}', {
+const rawModules = import.meta.glob('../**/*.{ts,tsx,js,jsx,css,html,json,md}', {
   as: 'raw',
   eager: true,
 }) as Record<string, string>;
