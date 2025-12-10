@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
-import { Copy, Check, Code, FileText } from 'lucide-react';
+import { Copy, Check, Code } from 'lucide-react';
 import { toast } from 'sonner';
 import { DownloadProjectButton } from './DownloadProjectButton';
 import { projectFiles } from '@/utils/projectFiles';
-import type { ProjectFile } from '@/utils/projectFiles'; // type‑only import
+import type { ProjectFile } from '@/utils/projectFiles';
 
 /* ---------- Source files list ---------- */
 const sourceFiles: ProjectFile[] = projectFiles;
@@ -108,5 +108,4 @@ export const SourceCodeDialog = () => {
   );
 };
 
-/* Export as default (also provides the named export above) */
 export default SourceCodeDialog;
