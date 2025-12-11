@@ -12,26 +12,42 @@ interface GenerateCodeResponse {
 }
 
 /**
- * Calls the `/api/generate-code` endpoint.
- * Handles:
- *   • Empty or non‑JSON responses → throws a clear error.
- *   • Network failures → returns a simple red‑themed HTML page as a graceful fallback.
+ * Calls the **local** AI endpoint at http://localhost:4891/v1/chat/completions.
+ *
+ * The function builds a minimal `messages` payload that the local AI model can
+ * understand (just a user message plus any prior conversation history). It
+ * then parses the JSON response or falls back to a simple red‑themed HTML page.
  */
-export const generateCode = async (payload: GenerateCodePayload): Promise<GenerateCodeResponse> => {
-  const token = localStorage.getItem('token'); // Get token from local storage
+export const generateCode = async (
+  payload: GenerateCodePayload,
+): Promise<GenerateCodeResponse> => {
+  const LOCAL_AI_URL = 'http://localhost:4891/v1/chat/completions';
+
+  // Build the messages array for the local AI.
+  // Include any prior conversation history so the model has context.
+  const messages = [
+    ...(payload.conversationHistory || []).map((msg) => ({
+      role: msg.role,
+      content: msg.content,
+    })),
+    { role: 'user', content: payload.prompt },
+  ];
 
   try {
-    const response = await fetch('/api/generate-code', {
+    const response = await fetch(LOCAL_AI_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }), // Add token if available
       },
-      body: JSON.stringify(payload),
+      // The local AI expects a `model` field (any string works) and a `messages` array.
+      body: JSON.stringify({
+        model: 'gpt4all', // placeholder – the local endpoint ignores the model name.
+        messages,
+      }),
     });
 
     // -------------------------------------------------
-    // 1️⃣  Non‑OK HTTP status → read body once and build error message
+    // 1️⃣  Non‑OK status – read the body once and build a clear error.
     // -------------------------------------------------
     if (!response.ok) {
       const rawBody = await response.text();
@@ -47,7 +63,7 @@ export const generateCode = async (payload: GenerateCodePayload): Promise<Genera
     }
 
     // -------------------------------------------------
-    // 2️⃣  Empty body? → this is the exact issue you saw.
+    // 2️⃣  Empty response body – common when the AI crashes.
     // -------------------------------------------------
     const text = await response.text();
     if (!text) {
@@ -55,12 +71,13 @@ export const generateCode = async (payload: GenerateCodePayload): Promise<Genera
     }
 
     // -------------------------------------------------
-    // 3️⃣  Try to parse JSON (the API is supposed to return JSON)
+    // 3️⃣  Parse JSON (the AI should return a JSON object).
     // -------------------------------------------------
     let data: GenerateCodeResponse;
     try {
       data = JSON.parse(text);
     } catch {
+      // Some models wrap JSON in markdown fences – try to extract it.
       const jsonMatch = text.match(/```(?:json)?\s*({[\s\S]*})\s*```/);
       if (jsonMatch) {
         try {
@@ -74,9 +91,13 @@ export const generateCode = async (payload: GenerateCodePayload): Promise<Genera
     }
 
     // -------------------------------------------------
-    // 4️⃣  Basic shape validation
+    // 4️⃣  Basic shape validation.
     // -------------------------------------------------
-    if (!data || typeof data.code !== 'string' || !['html', 'react'].includes(data.type)) {
+    if (
+      !data ||
+      typeof data.code !== 'string' ||
+      !['html', 'react'].includes(data.type)
+    ) {
       throw new Error('AI returned an unexpected payload structure.');
     }
 
@@ -85,7 +106,7 @@ export const generateCode = async (payload: GenerateCodePayload): Promise<Genera
     console.error('generateCode error:', e);
 
     // -------------------------------------------------
-    // 5️⃣  Graceful fallback – a simple red website
+    // 5️⃣  Graceful fallback – simple red‑themed page.
     // -------------------------------------------------
     const fallbackHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -104,17 +125,9 @@ export const generateCode = async (payload: GenerateCodePayload): Promise<Genera
       height: 100vh;
       text-align: center;
     }
-    h1 {
-      font-size: 3rem;
-      margin-bottom: 0.5rem;
-    }
-    p {
-      font-size: 1.2rem;
-    }
-    a {
-      color: #fff;
-      text-decoration: underline;
-    }
+    h1 { font-size: 3rem; margin-bottom: .5rem; }
+    p { font-size: 1.2rem; }
+    a { color: #fff; text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -130,7 +143,8 @@ export const generateCode = async (payload: GenerateCodePayload): Promise<Genera
       code: fallbackHtml,
       type: 'html',
       title: 'Red Website',
-      description: 'A simple red‑themed HTML page (fallback when AI is unavailable).',
+      description:
+        'A simple red‑themed HTML page (fallback when AI is unavailable).',
     };
   }
 };
