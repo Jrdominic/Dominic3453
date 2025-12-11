@@ -15,7 +15,7 @@ interface GenerateCodeResponse {
  * Calls the `/api/generate-code` endpoint.
  * Handles:
  *   • Empty or non‑JSON responses → throws a clear error.
- *   • Network failures → returns a mock “placeholder” response so the UI stays usable.
+ *   • Network failures → returns a simple red‑themed HTML page as a graceful fallback.
  */
 export const generateCode = async (payload: GenerateCodePayload): Promise<GenerateCodeResponse> => {
   const token = localStorage.getItem('token'); // Get token from local storage
@@ -34,16 +34,13 @@ export const generateCode = async (payload: GenerateCodePayload): Promise<Genera
     // 1️⃣  Non‑OK HTTP status → read body once and build error message
     // -------------------------------------------------
     if (!response.ok) {
-      // Read the raw body (text) only once
       const rawBody = await response.text();
 
       let errorMsg = `AI service responded with status ${response.status}`;
       try {
-        // Try to parse JSON if the server sent a structured error
         const errData = JSON.parse(rawBody);
         errorMsg += ` – ${errData.error ?? JSON.stringify(errData)}`;
       } catch {
-        // Not JSON – just append whatever text we got (if anything)
         if (rawBody) errorMsg += ` – ${rawBody}`;
       }
       throw new Error(errorMsg);
@@ -64,7 +61,6 @@ export const generateCode = async (payload: GenerateCodePayload): Promise<Genera
     try {
       data = JSON.parse(text);
     } catch {
-      // If parsing fails, the AI might have wrapped the JSON in markdown code fences.
       const jsonMatch = text.match(/```(?:json)?\s*({[\s\S]*})\s*```/);
       if (jsonMatch) {
         try {
@@ -78,7 +74,7 @@ export const generateCode = async (payload: GenerateCodePayload): Promise<Genera
     }
 
     // -------------------------------------------------
-    // 4️⃣  Basic shape validation (helps catch malformed payloads)
+    // 4️⃣  Basic shape validation
     // -------------------------------------------------
     if (!data || typeof data.code !== 'string' || !['html', 'react'].includes(data.type)) {
       throw new Error('AI returned an unexpected payload structure.');
@@ -89,17 +85,52 @@ export const generateCode = async (payload: GenerateCodePayload): Promise<Genera
     console.error('generateCode error:', e);
 
     // -------------------------------------------------
-    // 5️⃣  Fallback mock – lets the UI continue working.
+    // 5️⃣  Graceful fallback – a simple red website
     // -------------------------------------------------
-    // You can remove this block once the real endpoint works.
+    const fallbackHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Red Website</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background-color: #ff0000;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+    }
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 0.5rem;
+    }
+    p {
+      font-size: 1.2rem;
+    }
+    a {
+      color: #fff;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <h1>Welcome to the Red Site</h1>
+    <p>This is a simple red‑themed page generated as a fallback.</p>
+    <p><a href="/">Back to the app</a></p>
+  </div>
+</body>
+</html>`;
+
     return {
-      code: `<div style="padding:20px; font-family:sans-serif; text-align:center;">
-  <h2>AI unavailable</h2>
-  <p>${e.message}</p>
-</div>`,
+      code: fallbackHtml,
       type: 'html',
-      title: 'AI Error',
-      description: 'Failed to generate code – showing fallback placeholder.',
+      title: 'Red Website',
+      description: 'A simple red‑themed HTML page (fallback when AI is unavailable).',
     };
   }
 };
