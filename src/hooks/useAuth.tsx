@@ -4,14 +4,35 @@ interface User {
   id: string;
   email: string;
   full_name?: string;
+  password: string; // plain text for demo only – **never** use in production
+  credits?: number;
 }
 
 interface AuthState {
-  user: User | null;
+  user: Omit<User, 'password' | 'credits'> | null;
   token: string | null;
   isLoading: boolean;
 }
 
+/* ---------- helpers for localStorage ---------- */
+const USERS_KEY = 'cortex_users';
+const TOKEN_KEY = 'cortex_token';
+const USER_KEY = 'cortex_user';
+
+function getStoredUsers(): User[] {
+  const raw = localStorage.getItem(USERS_KEY);
+  return raw ? JSON.parse(raw) : [];
+}
+
+function setStoredUsers(users: User[]) {
+  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+}
+
+function generateToken() {
+  return `token-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+}
+
+/* ---------- main hook ---------- */
 export const useAuth = () => {
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
@@ -19,13 +40,14 @@ export const useAuth = () => {
     isLoading: true,
   });
 
+  /* ----- load persisted session on mount ----- */
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    const storedToken = localStorage.getItem('token');
-    if (storedUser && storedToken) {
+    const token = localStorage.getItem(TOKEN_KEY);
+    const userRaw = localStorage.getItem(USER_KEY);
+    if (token && userRaw) {
       setAuthState({
-        user: JSON.parse(storedUser),
-        token: storedToken,
+        user: JSON.parse(userRaw),
+        token,
         isLoading: false,
       });
     } else {
@@ -33,90 +55,84 @@ export const useAuth = () => {
     }
   }, []);
 
-  const signIn = async (email: string, password: string) => {
-    try {
-      const response = await fetch('/api/auth/signin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        return { user: null, error: new Error(data.error || 'Sign in failed.') };
-      }
-
-      localStorage.setItem('user', JSON.stringify(data.user));
-      localStorage.setItem('token', data.token);
-      setAuthState({
-        user: data.user,
-        token: data.token,
-        isLoading: false,
-      });
-      return { user: data.user, error: null };
-    } catch (error: any) {
-      console.error('Sign in error:', error);
-      return { user: null, error: error };
-    }
-  };
-
+  /* ----- sign‑up ----- */
   const signUp = async (email: string, password: string) => {
-    try {
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await response.json();
+    const users = getStoredUsers();
 
-      if (!response.ok) {
-        return { user: null, error: new Error(data.error || 'Sign up failed.') };
-      }
-
-      localStorage.setItem('user', JSON.stringify(data.user));
-      localStorage.setItem('token', data.token);
-      setAuthState({
-        user: data.user,
-        token: data.token,
-        isLoading: false,
-      });
-      return { user: data.user, error: null };
-    } catch (error: any) {
-      console.error('Sign up error:', error);
-      return { user: null, error: error };
+    // simple duplicate‑email check
+    if (users.some(u => u.email === email)) {
+      return { user: null, error: new Error('User with this email already exists.') };
     }
+
+    const newUser: User = {
+      id: `user-${Date.now()}`,
+      email,
+      full_name: email.split('@')[0],
+      password,
+      credits: 4, // start with 4 credits (mirrors original backend)
+    };
+    users.push(newUser);
+    setStoredUsers(users);
+
+    const token = generateToken();
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(USER_KEY, JSON.stringify({
+      id: newUser.id,
+      email: newUser.email,
+      full_name: newUser.full_name,
+    }));
+
+    setAuthState({ user: { id: newUser.id, email: newUser.email, full_name: newUser.full_name }, token, isLoading: false });
+    return { user: { id: newUser.id, email: newUser.email, full_name: newUser.full_name }, error: null };
   };
 
+  /* ----- sign‑in ----- */
+  const signIn = async (email: string, password: string) => {
+    const users = getStoredUsers();
+    const found = users.find(u => u.email === email && u.password === password);
+    if (!found) {
+      return { user: null, error: new Error('Invalid credentials.') };
+    }
+
+    const token = generateToken();
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(USER_KEY, JSON.stringify({
+      id: found.id,
+      email: found.email,
+      full_name: found.full_name,
+    }));
+
+    setAuthState({
+      user: { id: found.id, email: found.email, full_name: found.full_name },
+      token,
+      isLoading: false,
+    });
+    return { user: { id: found.id, email: found.email, full_name: found.full_name }, error: null };
+  };
+
+  /* ----- delete account ----- */
   const deleteAccount = async () => {
-    try {
-      const response = await fetch('/api/auth/delete-account', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authState.token}`,
-        },
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        return { success: false, error: new Error(data.error || 'Account deletion failed.') };
-      }
-
-      localStorage.removeItem('user');
-      localStorage.removeItem('token');
-      setAuthState({
-        user: null,
-        token: null,
-        isLoading: false,
-      });
-      return { success: true, error: null };
-    } catch (error: any) {
-      console.error('Delete account error:', error);
-      return { success: false, error: error };
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) {
+      return { success: false, error: new Error('No active session.') };
     }
-  };
 
-  // No signOut function as per user request
+    const users = getStoredUsers();
+    const idx = users.findIndex(u => u.id === authState.user?.id);
+    if (idx === -1) {
+      return { success: false, error: new Error('User not found.') };
+    }
+
+    users.splice(idx, 1);
+    setStoredUsers(users);
+
+    // clear stored session
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    setAuthState({ user: null, token: null, isLoading: false });
+
+    return { success: true, error: null };
+  };
 
   return { ...authState, signIn, signUp, deleteAccount };
 };
