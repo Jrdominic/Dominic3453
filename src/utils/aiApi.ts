@@ -31,17 +31,20 @@ export const generateCode = async (payload: GenerateCodePayload): Promise<Genera
     });
 
     // -------------------------------------------------
-    // 1️⃣  Non‑OK HTTP status → try to read error text
+    // 1️⃣  Non‑OK HTTP status → read body once and build error message
     // -------------------------------------------------
     if (!response.ok) {
+      // Read the raw body (text) only once
+      const rawBody = await response.text();
+
       let errorMsg = `AI service responded with status ${response.status}`;
       try {
-        // Some error bodies are JSON, others are plain text
-        const errData = await response.json();
+        // Try to parse JSON if the server sent a structured error
+        const errData = JSON.parse(rawBody);
         errorMsg += ` – ${errData.error ?? JSON.stringify(errData)}`;
       } catch {
-        const txt = await response.text();
-        if (txt) errorMsg += ` – ${txt}`;
+        // Not JSON – just append whatever text we got (if anything)
+        if (rawBody) errorMsg += ` – ${rawBody}`;
       }
       throw new Error(errorMsg);
     }
