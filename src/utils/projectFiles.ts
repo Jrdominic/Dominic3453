@@ -12,9 +12,9 @@ export interface ProjectFile {
 // The pattern '../../**/*' walks the entire repository (utils → src → project root).
 // as: 'raw' returns file contents as plain strings.
 // eager: true imports everything immediately for mapping.
-// The glob captures the most common source file extensions.
+// The glob captures the most common source file extensions, now also includes .bat files.
 const rawModules = import.meta.glob(
-  '../../**/*.{ts,tsx,js,jsx,css,html,json,md,svg}',
+  '../../**/*.{ts,tsx,js,jsx,css,html,json,md,svg,bat}',
   {
     as: 'raw',
     eager: true,
@@ -42,6 +42,8 @@ function mapExtToLang(ext: string): string {
       return 'markdown';
     case '.svg':
       return 'svg';
+    case '.bat':
+      return 'bat';
     case '.png':
     case '.jpg':
     case '.jpeg':
