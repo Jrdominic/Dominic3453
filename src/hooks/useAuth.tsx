@@ -53,6 +53,22 @@ export const useAuth = () => {
     } else {
       setAuthState(prev => ({ ...prev, isLoading: false }));
     }
+
+    /* Listen for changes made from other components (e.g., sign‑up dialog) */
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === TOKEN_KEY || e.key === USER_KEY) {
+        const newToken = localStorage.getItem(TOKEN_KEY);
+        const newUserRaw = localStorage.getItem(USER_KEY);
+        setAuthState({
+          user: newUserRaw ? JSON.parse(newUserRaw) : null,
+          token: newToken,
+          isLoading: false,
+        });
+      }
+    };
+
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, []);
 
   /* ----- sign‑up ----- */
@@ -82,6 +98,7 @@ export const useAuth = () => {
       full_name: newUser.full_name,
     }));
 
+    // Update this hook's state (also triggers the storage listener above)
     setAuthState({ user: { id: newUser.id, email: newUser.email, full_name: newUser.full_name }, token, isLoading: false });
     return { user: { id: newUser.id, email: newUser.email, full_name: newUser.full_name }, error: null };
   };
