@@ -12,13 +12,13 @@ interface GenerateCodeResponse {
 }
 
 const OLLAMA_API_KEY = import.meta.env.VITE_OLLAMA_API_KEY;
-const OLLAMA_API_URL = import.meta.env.VITE_OLLAMA_API_URL || "http://localhost:11434/api/chat";
+const OLLAMA_API_URL = import.meta.env.VITE_OLLAMA_API_URL; // Now read directly from .env
 
 export const generateCode = async (
   payload: GenerateCodePayload,
 ): Promise<GenerateCodeResponse> => {
-  if (!OLLAMA_API_KEY && OLLAMA_API_URL !== "http://localhost:11434/api/chat") {
-    throw new Error("OLLAMA_API_KEY is not configured for remote Ollama API. Please set VITE_OLLAMA_API_KEY in your .env file.");
+  if (!OLLAMA_API_KEY || !OLLAMA_API_URL) {
+    throw new Error("VITE_OLLAMA_API_KEY and VITE_OLLAMA_API_URL must be configured in your .env file.");
   }
 
   const systemPrompt = `You are Cortex, an expert code generation AI. Generate complete, working, production-ready code based on user requests.
@@ -60,7 +60,7 @@ Return ONLY a JSON object with this structure:
   const headers: HeadersInit = {
     "Content-Type": "application/json",
   };
-  if (OLLAMA_API_KEY && OLLAMA_API_URL !== "http://localhost:11434/api/chat") {
+  if (OLLAMA_API_KEY) { // Always include API key if present
     headers["Authorization"] = `Bearer ${OLLAMA_API_KEY}`;
   }
 
@@ -69,7 +69,7 @@ Return ONLY a JSON object with this structure:
       method: "POST",
       headers: headers,
       body: JSON.stringify({
-        model: "llama3",
+        model: "chatgpt-oss", // Updated model name
         messages: ollamaMessages,
         stream: false,
       }),
@@ -77,15 +77,15 @@ Return ONLY a JSON object with this structure:
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Ollama API error:", response.status, errorText);
-      throw new Error(`Ollama API error: ${response.status} - ${errorText}`);
+      console.error("AI API error:", response.status, errorText);
+      throw new Error(`AI API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
     const content = data.message?.content;
 
     if (!content) {
-      throw new Error("Ollama API returned an empty message content.");
+      throw new Error("AI API returned an empty message content.");
     }
 
     let jsonContent = content;
@@ -98,7 +98,7 @@ Return ONLY a JSON object with this structure:
     try {
       parsedResponse = JSON.parse(jsonContent);
     } catch (e) {
-      console.error("Failed to parse JSON from Ollama response:", jsonContent);
+      console.error("Failed to parse JSON from AI response:", jsonContent);
       parsedResponse = {
         type: "html",
         code: content,
