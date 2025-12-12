@@ -265,7 +265,12 @@ const Index = () => {
           </div>
         </div>
       </footer>
-      <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} initialIsSignUp={isSignUpMode} />
+      <AuthDialog
+        open={authDialogOpen}
+        onOpenChange={setAuthDialogOpen}
+        initialIsSignUp={isSignUpMode}
+        onAuthSuccess={() => setAuthDialogOpen(false)} // Explicitly close the dialog on success
+      />
     </div>
   );
 };
