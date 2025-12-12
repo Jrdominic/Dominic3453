@@ -2,7 +2,7 @@ import { Plus, Paperclip, Palette, Mic, ArrowUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom"; // Import useLocation
+import { useNavigate, useLocation } from "react-router-dom";
 import sLogo from "@/assets/s-logo.png";
 import AnimatedBackground from "@/components/AnimatedBackground";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
@@ -18,19 +18,12 @@ const Index = () => {
   const { ref: howItWorksRef, isVisible: howItWorksVisible } = useScrollAnimation();
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation(); // Initialize useLocation
+  const location = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  // Effect to navigate to chat page after successful authentication
-  useEffect(() => {
-    if (!isLoading && user) {
-      // Only navigate if not already on the chat page to prevent unnecessary re-renders/loops
-      if (location.pathname !== '/chat') {
-        navigate('/chat');
-      }
-    }
-  }, [user, isLoading, navigate, location.pathname]); // Add location.pathname to dependencies
+  // Removed the useEffect that automatically navigates to /chat after login.
+  // Users will now stay on the index page after signing in/up.
 
   const handleSendClick = () => {
     if (!inputValue.trim() && !selectedImage) {
