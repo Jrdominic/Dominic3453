@@ -13,7 +13,6 @@ interface GenerateCodeResponse {
 
 /* Environment variables (set in .env) */
 const OLLAMA_BASE_URL = import.meta.env.VITE_OLLAMA_API_URL; // e.g., http://localhost:11434
-const OLLAMA_API_ENDPOINT = import.meta.env.VITE_OLLAMA_API_ENDPOINT; // optional full endpoint
 const OLLAMA_API_KEY = import.meta.env.VITE_OLLAMA_API_KEY || 'anything'; // any non‑empty key
 
 if (!OLLAMA_BASE_URL) {
@@ -22,17 +21,13 @@ if (!OLLAMA_BASE_URL) {
   );
 }
 
-/* Build the final endpoint:
-   - If VITE_OLLAMA_API_ENDPOINT is provided, use it verbatim.
-   - Otherwise, use the plain base URL (no added path). */
-const OLLAMA_ENDPOINT = OLLAMA_API_ENDPOINT
-  ? OLLAMA_API_ENDPOINT.replace(/\/+$/g, '') // strip trailing slash if user added one
-  : OLLAMA_BASE_URL.replace(/\/+$/g, '');
+/* Build the full endpoint: base URL + '/v1/chat/completions' (no double slash) */
+const OLLAMA_ENDPOINT = `${OLLAMA_BASE_URL.replace(/\/+$/g, '')}/v1/chat/completions`;
 
 export const generateCode = async (
   payload: GenerateCodePayload,
 ): Promise<GenerateCodeResponse> => {
-  // Debug: show exact URL being called
+  // 👉 Debug: show the exact URL being called
   console.log('📡 Calling Ollama endpoint:', OLLAMA_ENDPOINT);
 
   const systemPrompt = `You are Cortex, an expert code generation AI. Generate complete, production‑ready code based on user requests.
@@ -98,7 +93,7 @@ Return ONLY a JSON object:
       throw new Error('AI API returned empty content.');
     }
 
-    // Extract JSON if wrapped in code fences
+    // Extract JSON if it’s wrapped in markdown fences
     let jsonString = content;
     const match = content.match(/```(?:json)?\s*({[\s\S]*})\s*```/);
     if (match) jsonString = match[1];
@@ -108,7 +103,7 @@ Return ONLY a JSON object:
       parsed = JSON.parse(jsonString);
     } catch (e) {
       console.error('Failed to parse JSON from AI response:', jsonString);
-      // Fallback: treat whole content as raw HTML/React code
+      // Fallback: treat the whole response as raw HTML/React code
       parsed = {
         type: 'html',
         code: content,
