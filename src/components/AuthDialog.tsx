@@ -12,9 +12,10 @@ interface AuthDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialIsSignUp?: boolean;
+  onAuthSuccess?: () => void; // Added new prop
 }
 
-export const AuthDialog = ({ open, onOpenChange, initialIsSignUp = true }: AuthDialogProps) => {
+export const AuthDialog = ({ open, onOpenChange, initialIsSignUp = true, onAuthSuccess }: AuthDialogProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(initialIsSignUp);
@@ -46,6 +47,7 @@ export const AuthDialog = ({ open, onOpenChange, initialIsSignUp = true }: AuthD
       } else {
         toast.success("Account created and signed in successfully!");
         onOpenChange(false);
+        onAuthSuccess?.(); // Call the callback on success
       }
     } else {
       authResult = await signIn(email, password);
@@ -54,6 +56,7 @@ export const AuthDialog = ({ open, onOpenChange, initialIsSignUp = true }: AuthD
       } else {
         toast.success("Signed in successfully!");
         onOpenChange(false);
+        onAuthSuccess?.(); // Call the callback on success
       }
     }
     

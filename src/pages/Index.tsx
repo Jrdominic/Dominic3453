@@ -21,16 +21,12 @@ const Index = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  // Removed the useEffect that automatically navigates to /chat after login.
-  // Users will now stay on the Index page after authentication.
-
   const handleSendClick = () => {
     if (!inputValue.trim() && !selectedImage) {
       toast.error('Please enter a prompt or attach an image');
       return;
     }
     if (user) {
-      // Navigate to chat page with prompt only when explicitly sent
       navigate('/chat', { state: { prompt: inputValue, image: selectedImage } });
     } else {
       toast.info("Please log in or sign up to use Cortex.");
@@ -81,6 +77,16 @@ const Index = () => {
     if (!user) return '';
     const fullName = user.full_name || user.email?.split('@')[0] || 'User';
     return fullName.split(' ')[0];
+  };
+
+  // This function will be called when AuthDialog successfully authenticates
+  const handleAuthSuccess = () => {
+    // The useAuth hook in Index.tsx should already have updated its 'user' state
+    // due to the setAuthState call within useAuth's signIn/signUp.
+    // We can add a console.log here to confirm the user state.
+    console.log("Auth successful, AuthDialog closed. Index.tsx user state:", user);
+    // No explicit state update needed here, as useAuth should handle it.
+    // The component will re-render with the updated 'user' from useAuth.
   };
 
   return (
@@ -265,7 +271,7 @@ const Index = () => {
           </div>
         </div>
       </footer>
-      <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} initialIsSignUp={isSignUpMode} />
+      <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} initialIsSignUp={isSignUpMode} onAuthSuccess={handleAuthSuccess} />
     </div>
   );
 };
