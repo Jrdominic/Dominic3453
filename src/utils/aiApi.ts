@@ -26,31 +26,33 @@ export const generateCode = async (
     );
   }
 
-  const systemPrompt = `You are Cortex, an expert code generation AI. Generate complete, working, production-ready code based on user requests.
+  // 👉 Debug: show the exact URL being called
+  console.log('📡 Calling AI endpoint:', OLLAMA_API_URL);
+
+  const systemPrompt = `You are Cortex, an expert code generation AI. Generate complete, working, production‑ready code based on user requests.
 
 CRITICAL RULES:
 1. Generate ONLY executable code - HTML, CSS, JavaScript, or React components
 2. For simple UIs: Generate a complete HTML file with inline CSS and JavaScript
 3. For complex apps: Generate a React component WITHOUT any import/export statements
-4. Always include ALL code - no placeholders, no "// rest of code here" comments
-5. Code must be immediately executable in a browser iframe without modification
+4. ALWAYS include ALL code – no placeholders
+5. Code must run directly in a browser iframe
 6. Include responsive design and modern styling
-7. Use Tailwind CSS classes when possible for styling
+7. Use Tailwind CSS when possible
 8. Make it beautiful and functional
 
 CRITICAL - NO MODULE SYNTAX:
-- DO NOT use "export default" or "export" statements
-- DO NOT use "import" statements (React is already available globally)
-- For React: Just define the function component, it will be auto-detected
-- The code runs directly in a browser, not in a module system
+- Do NOT use "export" or "import" statements
+- React is already available globally
+- Just define the component function
 
 OUTPUT FORMAT:
-Return ONLY a JSON object with this structure:
+Return ONLY a JSON object:
 {
   "type": "html" | "react",
   "code": "complete executable code here",
-  "title": "brief title of what was created",
-  "description": "one sentence description"
+  "title": "brief title",
+  "description": "one‑sentence description"
 }`;
 
   const ollamaMessages: any[] = [
@@ -71,7 +73,7 @@ Return ONLY a JSON object with this structure:
       method: "POST",
       headers,
       body: JSON.stringify({
-        model: "qwen2.5-coder", // Qwen 2.5 coder model
+        model: "qwen2.5-coder",
         messages: ollamaMessages,
         stream: false,
       }),
@@ -90,7 +92,7 @@ Return ONLY a JSON object with this structure:
       throw new Error("AI API returned an empty message content.");
     }
 
-    // Extract JSON if wrapped in code fences
+    // Strip possible code fences
     let jsonContent = content;
     const jsonMatch = content.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
     if (jsonMatch) {
