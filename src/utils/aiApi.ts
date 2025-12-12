@@ -22,15 +22,19 @@ if (!OLLAMA_BASE_URL) {
 }
 
 /* ---------------------------------------------------------
-   Build the final endpoint.
-   • Remove trailing slashes from the base URL.
-   • Append ONLY '/chat/completions'.
-   This yields the correct URL in both cases:
-     - base: http://localhost:11434          → http://localhost:11434/chat/completions
-     - base: http://localhost:11434/v1      → http://localhost:11434/v1/chat/completions
+   Build the final endpoint (bullet‑proof):
+   1. Remove trailing slashes from the base URL.
+   2. Ensure the base ends with exactly one "/v1".
+   3. Append "/chat/completions".
+   This works for both:
+     - base: http://localhost:11434      → http://localhost:11434/v1/chat/completions
+     - base: http://localhost:11434/v1 → http://localhost:11434/v1/chat/completions
    ---------------------------------------------------------- */
 const sanitizedBase = OLLAMA_BASE_URL.replace(/\/+$/g, '');
-const OLLAMA_ENDPOINT = `${sanitizedBase}/chat/completions`;
+const baseWithV1 = sanitizedBase.endsWith('/v1')
+  ? sanitizedBase
+  : `${sanitizedBase}/v1`;
+const OLLAMA_ENDPOINT = `${baseWithV1}/chat/completions`;
 
 export const generateCode = async (
   payload: GenerateCodePayload,
@@ -101,7 +105,7 @@ Return ONLY a JSON object:
       throw new Error('AI API returned empty content.');
     }
 
-    // If Ollama wraps the JSON in markdown fences, extract it
+    // Extract JSON if wrapped in markdown fences
     let jsonString = content;
     const match = content.match(/```(?:json)?\s*({[\s\S]*})\s*```/);
     if (match) jsonString = match[1];
@@ -111,7 +115,7 @@ Return ONLY a JSON object:
       parsed = JSON.parse(jsonString);
     } catch (e) {
       console.error('Failed to parse JSON from AI response:', jsonString);
-      // Fallback: treat the whole response as raw HTML/React code
+      // Fallback: treat whole response as raw HTML/React code
       parsed = {
         type: 'html',
         code: content,
