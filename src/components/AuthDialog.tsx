@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth"; // Use the updated auth hook
+import { useNavigate } from "react-router-dom"; // <-- added
 
 interface AuthDialogProps {
   open: boolean;
@@ -21,6 +22,7 @@ export const AuthDialog = ({ open, onOpenChange, initialIsSignUp = true, onAuthS
   const [isSignUp, setIsSignUp] = useState(initialIsSignUp);
   const [isLoading, setIsLoading] = useState(false);
   const { signIn, signUp, deleteAccount, user } = useAuth(); // Get auth functions and user
+  const navigate = useNavigate(); // <-- added
 
   useEffect(() => {
     setIsSignUp(initialIsSignUp);
@@ -59,7 +61,7 @@ export const AuthDialog = ({ open, onOpenChange, initialIsSignUp = true, onAuthS
         onAuthSuccess?.(); // Call the callback on success
       }
     }
-    
+
     setIsLoading(false);
   };
 
@@ -74,6 +76,8 @@ export const AuthDialog = ({ open, onOpenChange, initialIsSignUp = true, onAuthS
     } else {
       toast.success("Account deleted successfully!");
       onOpenChange(false);
+      // Redirect to the home page after deletion
+      navigate("/");
     }
     setIsLoading(false);
   };
@@ -94,7 +98,7 @@ export const AuthDialog = ({ open, onOpenChange, initialIsSignUp = true, onAuthS
             </DialogDescription>
           )}
         </DialogHeader>
-        
+
         <div className="flex flex-col gap-4 mt-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
@@ -104,7 +108,7 @@ export const AuthDialog = ({ open, onOpenChange, initialIsSignUp = true, onAuthS
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAuth()}
+              onKeyDown={(e) => e.key === "Enter" && handleAuth()}
               className="h-12"
             />
           </div>
@@ -117,28 +121,21 @@ export const AuthDialog = ({ open, onOpenChange, initialIsSignUp = true, onAuthS
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAuth()}
+              onKeyDown={(e) => e.key === "Enter" && handleAuth()}
               className="h-12"
             />
           </div>
 
-          <Button
-            onClick={handleAuth}
-            disabled={isLoading}
-            className="w-full h-12"
-          >
-            {isLoading ? "Loading..." : (isSignUp ? "Sign Up" : "Sign In")}
+          <Button onClick={handleAuth} disabled={isLoading} className="w-full h-12">
+            {isLoading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
           </Button>
 
-          <Button
-            onClick={() => setIsSignUp(!isSignUp)}
-            variant="ghost"
-            className="w-full"
-          >
+          <Button onClick={() => setIsSignUp(!isSignUp)} variant="ghost" className="w-full">
             {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
           </Button>
         </div>
-        {user && ( // Only show delete option if user is logged in
+
+        {user && (
           <DialogFooter className="mt-4">
             <Button
               variant="destructive"
