@@ -21,11 +21,8 @@ const Index = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!isLoading && user) {
-      navigate('/chat');
-    }
-  }, [user, isLoading, navigate]);
+  // Removed the useEffect that automatically navigates to /chat after login.
+  // Users will now stay on the Index page after authentication.
 
   const handleSendClick = () => {
     if (!inputValue.trim() && !selectedImage) {
@@ -33,6 +30,7 @@ const Index = () => {
       return;
     }
     if (user) {
+      // Navigate to chat page with prompt only when explicitly sent
       navigate('/chat', { state: { prompt: inputValue, image: selectedImage } });
     } else {
       toast.info("Please log in or sign up to use Cortex.");
