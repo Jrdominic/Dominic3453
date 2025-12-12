@@ -11,40 +11,41 @@ interface GenerateCodeResponse {
   description: string;
 }
 
-/* Read env vars */
+/* Environment variables (set in .env) */
 const OLLAMA_BASE_URL = import.meta.env.VITE_OLLAMA_API_URL; // e.g., http://localhost:11434
+const OLLAMA_API_KEY = import.meta.env.VITE_OLLAMA_API_KEY || 'anything'; // any non‑empty key
 
-// Ensure we have the correct endpoint (append if missing)
-const OLLAMA_API_URL = OLLAMA_BASE_URL?.replace(/\/+$/, '') + '/v1/chat/completions';
+if (!OLLAMA_BASE_URL) {
+  throw new Error(
+    "VITE_OLLAMA_API_URL must be defined in your .env (e.g., http://localhost:11434)."
+  );
+}
+
+/* The endpoint is the raw base URL – do NOT append anything.
+   Use a simple regex to strip any trailing forward slashes. */
+const OLLAMA_ENDPOINT = OLLAMA_BASE_URL.replace(/\/+$/g, '');
 
 export const generateCode = async (
   payload: GenerateCodePayload,
 ): Promise<GenerateCodeResponse> => {
-  if (!OLLAMA_BASE_URL) {
-    throw new Error(
-      "VITE_OLLAMA_API_URL must be configured in your .env (e.g., http://localhost:11434)."
-    );
-  }
+  // Debug: show exact URL being called
+  console.log('📡 Calling Ollama endpoint:', OLLAMA_ENDPOINT);
 
-  // 👉 Debug: show the exact URL being called
-  console.log('📡 Calling AI endpoint:', OLLAMA_API_URL);
-
-  const systemPrompt = `You are Cortex, an expert code generation AI. Generate complete, working, production‑ready code based on user requests.
+  const systemPrompt = `You are Cortex, an expert code generation AI. Generate complete, production‑ready code based on user requests.
 
 CRITICAL RULES:
-1. Generate ONLY executable code - HTML, CSS, JavaScript, or React components
-2. For simple UIs: Generate a complete HTML file with inline CSS and JavaScript
-3. For complex apps: Generate a React component WITHOUT any import/export statements
-4. ALWAYS include ALL code – no placeholders
-5. Code must run directly in a browser iframe
-6. Include responsive design and modern styling
-7. Use Tailwind CSS when possible
-8. Make it beautiful and functional
+1. Output ONLY executable code (HTML, CSS, JavaScript, or a React component).
+2. For simple UIs generate a full HTML file with inline CSS/JS.
+3. For complex apps generate a React component **without any import/export statements**.
+4. Include EVERY line of code – no placeholders or comments like "// …".
+5. The code must run directly in a browser iframe.
+6. Ensure responsive design and modern styling.
+7. Use Tailwind CSS classes whenever possible.
+8. Make it beautiful and functional.
 
-CRITICAL - NO MODULE SYNTAX:
-- Do NOT use "export" or "import" statements
-- React is already available globally
-- Just define the component function
+NO MODULE SYNTAX:
+- Do NOT use "import" or "export".
+- React is globally available; just define the component function.
 
 OUTPUT FORMAT:
 Return ONLY a JSON object:
@@ -55,66 +56,66 @@ Return ONLY a JSON object:
   "description": "one‑sentence description"
 }`;
 
-  const ollamaMessages: any[] = [
-    { role: "system", content: systemPrompt },
-    ...(payload.conversationHistory || []).map((msg: any) => ({
+  const messages = [
+    { role: 'system', content: systemPrompt },
+    ...(payload.conversationHistory || []).map((msg) => ({
       role: msg.role,
       content: msg.content,
     })),
-    { role: "user", content: payload.prompt },
+    { role: 'user', content: payload.prompt },
   ];
 
   const headers: HeadersInit = {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${OLLAMA_API_KEY}`,
   };
 
   try {
-    const response = await fetch(OLLAMA_API_URL, {
-      method: "POST",
+    const response = await fetch(OLLAMA_ENDPOINT, {
+      method: 'POST',
       headers,
       body: JSON.stringify({
-        model: "qwen2.5-coder",
-        messages: ollamaMessages,
+        model: 'qwen2.5-coder:7b',
+        messages,
         stream: false,
       }),
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("AI API error:", response.status, errorText);
-      throw new Error(`AI API error: ${response.status} - ${errorText}`);
+      const err = await response.text();
+      console.error('AI API error:', response.status, err);
+      throw new Error(`AI API error: ${response.status} - ${err}`);
     }
 
     const data = await response.json();
     const content = data.message?.content;
 
     if (!content) {
-      throw new Error("AI API returned an empty message content.");
+      throw new Error('AI API returned empty content.');
     }
 
-    // Strip possible code fences
-    let jsonContent = content;
-    const jsonMatch = content.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
-    if (jsonMatch) {
-      jsonContent = jsonMatch[1];
-    }
+    // If Ollama wraps the JSON in code fences, extract it
+    let jsonString = content;
+    const match = content.match(/```(?:json)?\s*({[\s\S]*})\s*```/);
+    if (match) jsonString = match[1];
 
-    let parsedResponse;
+    let parsed: GenerateCodeResponse;
     try {
-      parsedResponse = JSON.parse(jsonContent);
-    } catch {
-      console.error("Failed to parse JSON from AI response:", jsonContent);
-      parsedResponse = {
-        type: "html",
+      parsed = JSON.parse(jsonString);
+    } catch (e) {
+      console.error('Failed to parse JSON from AI response:', jsonString);
+      // Fallback: treat the whole content as raw HTML/React code
+      parsed = {
+        type: 'html',
         code: content,
-        title: "Generated Content",
-        description: "Generated based on your request",
+        title: 'Generated Content',
+        description: 'Result generated by Ollama',
       };
     }
 
-    return parsedResponse;
-  } catch (e: any) {
-    console.error("generateCode error:", e);
-    throw e;
+    return parsed;
+  } catch (err: any) {
+    console.error('generateCode error:', err);
+    throw err;
   }
 };
