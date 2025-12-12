@@ -99,13 +99,16 @@ Return ONLY a JSON object:
     }
 
     const data = await response.json();
-    const content = data.message?.content;
+
+    // Correct parsing for OpenAI‑compatible response
+    const content = data.choices?.[0]?.message?.content;
 
     if (!content) {
+      console.error('Raw AI response:', data);
       throw new Error('AI API returned empty content.');
     }
 
-    // Extract JSON if wrapped in markdown fences
+    // If Ollama wraps the JSON in markdown fences, extract it
     let jsonString = content;
     const match = content.match(/```(?:json)?\s*({[\s\S]*})\s*```/);
     if (match) jsonString = match[1];
