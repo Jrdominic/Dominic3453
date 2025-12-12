@@ -12,22 +12,30 @@ interface GenerateCodeResponse {
 }
 
 /* Environment variables (set in .env) */
-const OLLAMA_BASE_URL = import.meta.env.VITE_OLLAMA_API_URL; // e.g., http://localhost:11434
-const OLLAMA_API_KEY = import.meta.env.VITE_OLLAMA_API_KEY || 'anything'; // any non‑empty key
+const OLLAMA_BASE_URL = import.meta.env.VITE_OLLAMA_API_URL; // e.g., http://localhost:11434 or http://localhost:11434/v1
+const OLLAMA_API_KEY = import.meta.env.VITE_OLLAMA_API_KEY || 'ollama'; // any non‑empty key
 
 if (!OLLAMA_BASE_URL) {
   throw new Error(
-    "VITE_OLLAMA_API_URL must be defined in your .env (e.g., http://localhost:11434)."
+    "VITE_OLLAMA_API_URL must be defined in your .env (e.g., http://localhost:11434 or http://localhost:11434/v1)."
   );
 }
 
-/* Build the full endpoint: base URL + '/v1/chat/completions' (no double slash) */
-const OLLAMA_ENDPOINT = `${OLLAMA_BASE_URL.replace(/\/+$/g, '')}/v1/chat/completions`;
+/* ---------------------------------------------------------
+   Build the final endpoint.
+   • Remove trailing slashes from the base URL.
+   • Append ONLY '/chat/completions'.
+   This yields the correct URL in both cases:
+     - base: http://localhost:11434          → http://localhost:11434/chat/completions
+     - base: http://localhost:11434/v1      → http://localhost:11434/v1/chat/completions
+   ---------------------------------------------------------- */
+const sanitizedBase = OLLAMA_BASE_URL.replace(/\/+$/g, '');
+const OLLAMA_ENDPOINT = `${sanitizedBase}/chat/completions`;
 
 export const generateCode = async (
   payload: GenerateCodePayload,
 ): Promise<GenerateCodeResponse> => {
-  // 👉 Debug: show the exact URL being called
+  // Debug: show the exact URL being called
   console.log('📡 Calling Ollama endpoint:', OLLAMA_ENDPOINT);
 
   const systemPrompt = `You are Cortex, an expert code generation AI. Generate complete, production‑ready code based on user requests.
@@ -93,7 +101,7 @@ Return ONLY a JSON object:
       throw new Error('AI API returned empty content.');
     }
 
-    // Extract JSON if it’s wrapped in markdown fences
+    // If Ollama wraps the JSON in markdown fences, extract it
     let jsonString = content;
     const match = content.match(/```(?:json)?\s*({[\s\S]*})\s*```/);
     if (match) jsonString = match[1];
