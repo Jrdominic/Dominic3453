@@ -32,6 +32,12 @@ function generateToken() {
   return `token-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
 }
 
+/* ---------- broadcast helper ---------- */
+function broadcastAuthChange() {
+  // Simple custom event that any hook/component can listen for
+  window.dispatchEvent(new Event('auth-changed'));
+}
+
 /* ---------- main hook ---------- */
 export const useAuth = () => {
   const [authState, setAuthState] = useState<AuthState>({
@@ -42,33 +48,38 @@ export const useAuth = () => {
 
   /* ----- load persisted session on mount ----- */
   useEffect(() => {
-    const token = localStorage.getItem(TOKEN_KEY);
-    const userRaw = localStorage.getItem(USER_KEY);
-    if (token && userRaw) {
-      setAuthState({
-        user: JSON.parse(userRaw),
-        token,
-        isLoading: false,
-      });
-    } else {
-      setAuthState(prev => ({ ...prev, isLoading: false }));
-    }
-
-    /* Listen for changes made from other components (e.g., sign‑up dialog) */
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === TOKEN_KEY || e.key === USER_KEY) {
-        const newToken = localStorage.getItem(TOKEN_KEY);
-        const newUserRaw = localStorage.getItem(USER_KEY);
+    const loadFromStorage = () => {
+      const token = localStorage.getItem(TOKEN_KEY);
+      const userRaw = localStorage.getItem(USER_KEY);
+      if (token && userRaw) {
         setAuthState({
-          user: newUserRaw ? JSON.parse(newUserRaw) : null,
-          token: newToken,
+          user: JSON.parse(userRaw),
+          token,
           isLoading: false,
         });
+      } else {
+        setAuthState(prev => ({ ...prev, isLoading: false }));
       }
     };
 
+    loadFromStorage();
+
+    // Listen for auth changes from other hook instances (sign‑up, sign‑in, delete)
+    const onAuthChanged = () => loadFromStorage();
+    window.addEventListener('auth-changed', onAuthChanged);
+
+    // Also keep the original storage listener for separate tabs/windows
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === TOKEN_KEY || e.key === USER_KEY) {
+        loadFromStorage();
+      }
+    };
     window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+
+    return () => {
+      window.removeEventListener('auth-changed', onAuthChanged);
+      window.removeEventListener('storage', onStorage);
+    };
   }, []);
 
   /* ----- sign‑up ----- */
@@ -85,7 +96,7 @@ export const useAuth = () => {
       email,
       full_name: email.split('@')[0],
       password,
-      credits: 4, // start with 4 credits (mirrors original backend)
+      credits: 4,
     };
     users.push(newUser);
     setStoredUsers(users);
@@ -98,8 +109,16 @@ export const useAuth = () => {
       full_name: newUser.full_name,
     }));
 
-    // Update this hook's state (also triggers the storage listener above)
-    setAuthState({ user: { id: newUser.id, email: newUser.email, full_name: newUser.full_name }, token, isLoading: false });
+    // Update this hook's state
+    setAuthState({
+      user: { id: newUser.id, email: newUser.email, full_name: newUser.full_name },
+      token,
+      isLoading: false,
+    });
+
+    // Notify other hook instances
+    broadcastAuthChange();
+
     return { user: { id: newUser.id, email: newUser.email, full_name: newUser.full_name }, error: null };
   };
 
@@ -124,6 +143,9 @@ export const useAuth = () => {
       token,
       isLoading: false,
     });
+
+    broadcastAuthChange();
+
     return { user: { id: found.id, email: found.email, full_name: found.full_name }, error: null };
   };
 
@@ -147,6 +169,8 @@ export const useAuth = () => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     setAuthState({ user: null, token: null, isLoading: false });
+
+    broadcastAuthChange();
 
     return { success: true, error: null };
   };
