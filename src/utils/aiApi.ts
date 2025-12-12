@@ -12,14 +12,17 @@ interface GenerateCodeResponse {
 }
 
 /* Read env vars */
-const OLLAMA_API_URL = import.meta.env.VITE_OLLAMA_API_URL; // e.g., http://localhost:11434/v1/chat/completions
+const OLLAMA_BASE_URL = import.meta.env.VITE_OLLAMA_API_URL; // e.g., http://localhost:11434
+
+// Ensure we have the correct endpoint (append if missing)
+const OLLAMA_API_URL = OLLAMA_BASE_URL?.replace(/\/+$/, '') + '/v1/chat/completions';
 
 export const generateCode = async (
   payload: GenerateCodePayload,
 ): Promise<GenerateCodeResponse> => {
-  if (!OLLAMA_API_URL) {
+  if (!OLLAMA_BASE_URL) {
     throw new Error(
-      "VITE_OLLAMA_API_URL must be configured in your .env (e.g., http://localhost:11434/v1/chat/completions)."
+      "VITE_OLLAMA_API_URL must be configured in your .env (e.g., http://localhost:11434)."
     );
   }
 
@@ -87,6 +90,7 @@ Return ONLY a JSON object with this structure:
       throw new Error("AI API returned an empty message content.");
     }
 
+    // Extract JSON if wrapped in code fences
     let jsonContent = content;
     const jsonMatch = content.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
     if (jsonMatch) {
@@ -96,7 +100,7 @@ Return ONLY a JSON object with this structure:
     let parsedResponse;
     try {
       parsedResponse = JSON.parse(jsonContent);
-    } catch (e) {
+    } catch {
       console.error("Failed to parse JSON from AI response:", jsonContent);
       parsedResponse = {
         type: "html",
@@ -108,7 +112,7 @@ Return ONLY a JSON object with this structure:
 
     return parsedResponse;
   } catch (e: any) {
-    console.error('generateCode error:', e);
+    console.error("generateCode error:", e);
     throw e;
   }
 };
