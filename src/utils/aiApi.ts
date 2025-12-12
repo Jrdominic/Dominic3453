@@ -12,87 +12,34 @@ interface GenerateCodeResponse {
 }
 
 /**
- * Calls the **local** AI endpoint at http://localhost:4891/v1/chat/completions.
- *
- * The function builds a minimal `messages` payload that the local AI model can
- * understand (just a user message plus any prior conversation history). It
- * then parses the JSON response or falls back to a simple red‑themed HTML page.
+ * Calls the Supabase Edge Function for code generation.
+ * The Edge Function handles the actual call to the Ollama API.
  */
 export const generateCode = async (
   payload: GenerateCodePayload,
 ): Promise<GenerateCodeResponse> => {
-  const LOCAL_AI_URL = 'http://localhost:4891/v1/chat/completions';
-
-  // Build the messages array for the local AI.
-  // Include any prior conversation history so the model has context.
-  const messages = [
-    ...(payload.conversationHistory || []).map((msg) => ({
-      role: msg.role,
-      content: msg.content,
-    })),
-    { role: 'user', content: payload.prompt },
-  ];
+  const SUPABASE_EDGE_FUNCTION_URL = '/functions/v1/generate-code';
 
   try {
-    const response = await fetch(LOCAL_AI_URL, {
+    const response = await fetch(SUPABASE_EDGE_FUNCTION_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      // The local AI expects a `model` field (any string works) and a `messages` array.
       body: JSON.stringify({
-        model: 'gpt4all', // placeholder – the local endpoint ignores the model name.
-        messages,
+        prompt: payload.prompt,
+        conversationHistory: payload.conversationHistory,
+        image: payload.image, // Pass image to Edge Function, it will decide if Ollama can use it
       }),
     });
 
-    // -------------------------------------------------
-    // 1️⃣  Non‑OK status – read the body once and build a clear error.
-    // -------------------------------------------------
     if (!response.ok) {
-      const rawBody = await response.text();
-
-      let errorMsg = `AI service responded with status ${response.status}`;
-      try {
-        const errData = JSON.parse(rawBody);
-        errorMsg += ` – ${errData.error ?? JSON.stringify(errData)}`;
-      } catch {
-        if (rawBody) errorMsg += ` – ${rawBody}`;
-      }
-      throw new Error(errorMsg);
+      const errorData = await response.json();
+      throw new Error(errorData.error || `AI service responded with status ${response.status}`);
     }
 
-    // -------------------------------------------------
-    // 2️⃣  Empty response body – common when the AI crashes.
-    // -------------------------------------------------
-    const text = await response.text();
-    if (!text) {
-      throw new Error('AI returned an empty response. Check the server logs.');
-    }
+    const data: GenerateCodeResponse = await response.json();
 
-    // -------------------------------------------------
-    // 3️⃣  Parse JSON (the AI should return a JSON object).
-    // -------------------------------------------------
-    let data: GenerateCodeResponse;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      // Some models wrap JSON in markdown fences – try to extract it.
-      const jsonMatch = text.match(/```(?:json)?\s*({[\s\S]*})\s*```/);
-      if (jsonMatch) {
-        try {
-          data = JSON.parse(jsonMatch[1]);
-        } catch {
-          throw new Error('Failed to parse AI response JSON.');
-        }
-      } else {
-        throw new Error('AI response is not valid JSON.');
-      }
-    }
-
-    // -------------------------------------------------
-    // 4️⃣  Basic shape validation.
-    // -------------------------------------------------
     if (
       !data ||
       typeof data.code !== 'string' ||
@@ -104,47 +51,6 @@ export const generateCode = async (
     return data;
   } catch (e: any) {
     console.error('generateCode error:', e);
-
-    // -------------------------------------------------
-    // 5️⃣  Graceful fallback – simple red‑themed page.
-    // -------------------------------------------------
-    const fallbackHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Red Website</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: system-ui, sans-serif;
-      background-color: #ff0000;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      text-align: center;
-    }
-    h1 { font-size: 3rem; margin-bottom: .5rem; }
-    p { font-size: 1.2rem; }
-    a { color: #fff; text-decoration: underline; }
-  </style>
-</head>
-<body>
-  <div>
-    <h1>Welcome to the Red Site</h1>
-    <p>This is a simple red‑themed page generated as a fallback.</p>
-    <p><a href="/">Back to the app</a></p>
-  </div>
-</body>
-</html>`;
-
-    return {
-      code: fallbackHtml,
-      type: 'html',
-      title: 'Red Website',
-      description:
-        'A simple red‑themed HTML page (fallback when AI is unavailable).',
-    };
+    throw e; // Re-throw the error to be handled by the calling component (ChatInterface)
   }
 };

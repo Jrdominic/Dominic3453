@@ -1,22 +1,29 @@
+// @ts-ignore
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+// @ts-ignore
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const { prompt, conversationHistory, image } = await req.json(); // Receive image data
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    // @ts-ignore
+    const OLLAMA_API_KEY = Deno.env.get("OLLAMA_API_KEY");
+    // Default to local Ollama endpoint if OLLAMA_API_URL is not set
+    // @ts-ignore
+    const OLLAMA_API_URL = Deno.env.get("OLLAMA_API_URL") || "http://localhost:11434/api/chat"; 
     
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
+    // If a remote Ollama URL is used, an API key is expected
+    if (OLLAMA_API_URL !== "http://localhost:11434/api/chat" && !OLLAMA_API_KEY) {
+      throw new Error("OLLAMA_API_KEY is not configured for remote Ollama API.");
     }
 
     const systemPrompt = `You are Cortex, an expert code generation AI. Generate complete, working, production-ready code based on user requests.
@@ -44,78 +51,62 @@ Return ONLY a JSON object with this structure:
   "code": "complete executable code here",
   "title": "brief title of what was created",
   "description": "one sentence description"
-}
-
-Example for HTML:
-{
-  "type": "html",
-  "code": "<!DOCTYPE html>\\n<html>\\n<head>...</head>\\n<body>...</body>\\n</html>",
-  "title": "Todo App",
-  "description": "A simple todo list application"
-}
-
-Example for React (NO exports!):
-{
-  "type": "react",
-  "code": "function TodoApp() {\\n  const [todos, setTodos] = React.useState([]);\\n  // complete component code\\n  return (<div>...</div>);\\n}",
-  "title": "Todo App",
-  "description": "A feature-rich todo application"
 }`;
 
-    const aiMessages: any[] = [
-      { role: 'system', parts: [{ type: 'text', text: systemPrompt }] },
+    // Ollama's /api/chat endpoint typically expects 'content' directly, not 'parts'.
+    // Image handling for Ollama's /api/chat endpoint is not standard in this format,
+    // so images from the client will be ignored for the Ollama call for now.
+    const ollamaMessages: any[] = [
+      { role: "system", content: systemPrompt },
       ...(conversationHistory || []).map((msg: any) => ({
         role: msg.role,
-        parts: [
-          { type: 'text', text: msg.content },
-          ...(msg.image ? [{ type: 'image_url', image_url: { url: msg.image } }] : [])
-        ]
+        content: msg.content,
       })),
+      { role: "user", content: prompt },
     ];
 
-    const userMessageParts: any[] = [{ type: 'text', text: prompt }];
-    if (image) {
-      userMessageParts.push({ type: 'image_url', image_url: { url: image } });
+    console.log("Generating code for prompt:", prompt);
+    console.log("Messages sent to Ollama:", JSON.stringify(ollamaMessages, null, 2));
+
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    };
+    // Only include Authorization header if an API key is provided and it's not the default local URL
+    if (OLLAMA_API_KEY && OLLAMA_API_URL !== "http://localhost:11434/api/chat") {
+      headers["Authorization"] = `Bearer ${OLLAMA_API_KEY}`;
     }
-    aiMessages.push({ role: 'user', parts: userMessageParts });
 
-    console.log('Generating code for prompt:', prompt);
-    console.log('Messages sent to AI:', JSON.stringify(aiMessages, null, 2));
-
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
+    const response = await fetch(OLLAMA_API_URL, {
+      method: "POST",
+      headers: headers,
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: aiMessages, // Use the structured messages array
+        model: "llama3", // Default Ollama model, you can change this
+        messages: ollamaMessages,
+        stream: false, // Ollama /api/chat endpoint typically returns full response, not stream by default
       }),
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Ollama API error:", response.status, errorText);
       if (response.status === 429) {
         return new Response(
-          JSON.stringify({ error: 'Rate limit exceeded. Please try again in a moment.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: 'AI credits exhausted. Please add credits to your workspace in Settings → Workspace → Usage.' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      const error = await response.text();
-      console.error('Lovable AI error:', error);
-      throw new Error(`Lovable AI error: ${response.status}`);
+      return new Response(
+        JSON.stringify({ error: `Ollama API error: ${response.status} - ${errorText}` }),
+        { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const data = await response.json();
-    const content = data.choices[0].message.content;
+    const content = data.message?.content; // Extract content from Ollama's response structure
     
-    console.log('Raw response:', content);
+    if (!content) {
+      throw new Error("Ollama API returned an empty message content.");
+    }
 
     // Extract JSON from markdown code blocks if present
     let jsonContent = content;
@@ -128,28 +119,28 @@ Example for React (NO exports!):
     try {
       parsedResponse = JSON.parse(jsonContent);
     } catch (e) {
-      console.error('Failed to parse JSON:', jsonContent);
+      console.error("Failed to parse JSON from Ollama response:", jsonContent);
       // Fallback: treat entire content as HTML
       parsedResponse = {
-        type: 'html',
+        type: "html",
         code: content,
-        title: 'Generated Content',
-        description: 'Generated based on your request'
+        title: "Generated Content",
+        description: "Generated based on your request",
       };
     }
 
-    console.log('Parsed response:', parsedResponse);
+    console.log("Parsed response:", parsedResponse);
 
     return new Response(JSON.stringify(parsedResponse), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error('Error in generate-code function:', error);
+    console.error("Error in generate-code function:", error);
     return new Response(JSON.stringify({ 
-      error: error instanceof Error ? error.message : 'Unknown error' 
+      error: error instanceof Error ? error.message : "Unknown error" 
     }), {
       status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
