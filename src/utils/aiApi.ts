@@ -11,14 +11,16 @@ interface GenerateCodeResponse {
   description: string;
 }
 
-const OLLAMA_API_KEY = import.meta.env.VITE_OLLAMA_API_KEY;
-const OLLAMA_API_URL = import.meta.env.VITE_OLLAMA_API_URL; // Now read directly from .env
+/* Read env vars */
+const OLLAMA_API_URL = import.meta.env.VITE_OLLAMA_API_URL; // e.g., http://localhost:11434/v1/chat/completions
 
 export const generateCode = async (
   payload: GenerateCodePayload,
 ): Promise<GenerateCodeResponse> => {
-  if (!OLLAMA_API_KEY || !OLLAMA_API_URL) {
-    throw new Error("VITE_OLLAMA_API_KEY and VITE_OLLAMA_API_URL must be configured in your .env file.");
+  if (!OLLAMA_API_URL) {
+    throw new Error(
+      "VITE_OLLAMA_API_URL must be configured in your .env (e.g., http://localhost:11434/v1/chat/completions)."
+    );
   }
 
   const systemPrompt = `You are Cortex, an expert code generation AI. Generate complete, working, production-ready code based on user requests.
@@ -60,16 +62,13 @@ Return ONLY a JSON object with this structure:
   const headers: HeadersInit = {
     "Content-Type": "application/json",
   };
-  if (OLLAMA_API_KEY) { // Always include API key if present
-    headers["Authorization"] = `Bearer ${OLLAMA_API_KEY}`;
-  }
 
   try {
     const response = await fetch(OLLAMA_API_URL, {
       method: "POST",
-      headers: headers,
+      headers,
       body: JSON.stringify({
-        model: "chatgpt-oss", // Updated model name
+        model: "qwen2.5-coder", // Qwen 2.5 coder model
         messages: ollamaMessages,
         stream: false,
       }),
