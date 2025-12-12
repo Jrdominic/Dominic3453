@@ -21,9 +21,7 @@ const Index = () => {
   const location = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-
-  // Removed the useEffect that automatically navigates to /chat after login.
-  // Users will now stay on the index page after signing in/up.
+  const [authStatusKey, setAuthStatusKey] = useState(0); // New state to force AuthDialog re-mount
 
   const handleSendClick = () => {
     if (!inputValue.trim() && !selectedImage) {
@@ -265,11 +263,16 @@ const Index = () => {
           </div>
         </div>
       </footer>
+      {/* Added key prop here */}
       <AuthDialog
+        key={authStatusKey}
         open={authDialogOpen}
         onOpenChange={setAuthDialogOpen}
         initialIsSignUp={isSignUpMode}
-        onAuthSuccess={() => setAuthDialogOpen(false)} // Explicitly close the dialog on success
+        onAuthSuccess={() => {
+          setAuthDialogOpen(false);
+          setAuthStatusKey(prev => prev + 1); // Increment key on success
+        }}
       />
     </div>
   );
