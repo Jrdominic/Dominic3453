@@ -2,7 +2,7 @@ import { Plus, Paperclip, Palette, Mic, ArrowUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom"; // Import useLocation
 import sLogo from "@/assets/s-logo.png";
 import AnimatedBackground from "@/components/AnimatedBackground";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
@@ -18,8 +18,19 @@ const Index = () => {
   const { ref: howItWorksRef, isVisible: howItWorksVisible } = useScrollAnimation();
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation(); // Initialize useLocation
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  // Effect to navigate to chat page after successful authentication
+  useEffect(() => {
+    if (!isLoading && user) {
+      // Only navigate if not already on the chat page to prevent unnecessary re-renders/loops
+      if (location.pathname !== '/chat') {
+        navigate('/chat');
+      }
+    }
+  }, [user, isLoading, navigate, location.pathname]); // Add location.pathname to dependencies
 
   const handleSendClick = () => {
     if (!inputValue.trim() && !selectedImage) {
@@ -77,16 +88,6 @@ const Index = () => {
     if (!user) return '';
     const fullName = user.full_name || user.email?.split('@')[0] || 'User';
     return fullName.split(' ')[0];
-  };
-
-  // This function will be called when AuthDialog successfully authenticates
-  const handleAuthSuccess = () => {
-    // The useAuth hook in Index.tsx should already have updated its 'user' state
-    // due to the setAuthState call within useAuth's signIn/signUp.
-    // We can add a console.log here to confirm the user state.
-    console.log("Auth successful, AuthDialog closed. Index.tsx user state:", user);
-    // No explicit state update needed here, as useAuth should handle it.
-    // The component will re-render with the updated 'user' from useAuth.
   };
 
   return (
@@ -271,7 +272,7 @@ const Index = () => {
           </div>
         </div>
       </footer>
-      <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} initialIsSignUp={isSignUpMode} onAuthSuccess={handleAuthSuccess} />
+      <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} initialIsSignUp={isSignUpMode} />
     </div>
   );
 };
