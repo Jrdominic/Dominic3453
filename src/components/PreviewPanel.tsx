@@ -14,6 +14,11 @@ export const PreviewPanel = ({ code, type, isLoading, onFixErrors }: PreviewPane
   const [refreshKey, setRefreshKey] = useState(0);
   const [errors, setErrors] = useState<string[]>([]);
 
+  const getReactComponentName = (source: string) => {
+    const match = source.match(/(?:function|const|let|var|class)\s+([A-Z][A-Za-z0-9_]*)/);
+    return match?.[1] || null;
+  };
+
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1);
     setErrors([]);
@@ -43,6 +48,8 @@ export const PreviewPanel = ({ code, type, isLoading, onFixErrors }: PreviewPane
     if (type === 'html') {
       iframe.srcdoc = code;
     } else if (type === 'react') {
+      const componentName = getReactComponentName(code) || 'App';
+
       const htmlTemplate = `
         <!DOCTYPE html>
         <html>
@@ -65,7 +72,7 @@ export const PreviewPanel = ({ code, type, isLoading, onFixErrors }: PreviewPane
                   message: e.message + ' at ' + e.filename + ':' + e.lineno
                 }, '*');
               });
-              
+
               // Capture unhandled promise rejections
               window.addEventListener('unhandledrejection', function(e) {
                 window.parent.postMessage({
@@ -77,33 +84,45 @@ export const PreviewPanel = ({ code, type, isLoading, onFixErrors }: PreviewPane
           </head>
           <body>
             <div id="root"></div>
-            <script type="text/babel">
-              ${code}
-              
-              // Auto-detect component - try default export, then look for any function component
-              let Component = null;
-              
-              if (typeof exports !== 'undefined' && exports.default) {
-                Component = exports.default;
-              } else {
-                // Find any function that looks like a component (starts with capital letter)
+            <script type="text/babel" data-presets="env,react">
+              const exports = {};
+
+              try {
+                ${code}
+
+                const candidates = [];
+
+                if (typeof ${componentName} !== 'undefined') {
+                  candidates.push(${componentName});
+                }
+
+                if (typeof exports.default !== 'undefined') {
+                  candidates.push(exports.default);
+                }
+
                 const windowKeys = Object.keys(window);
                 for (let key of windowKeys) {
                   if (key[0] === key[0].toUpperCase() && typeof window[key] === 'function') {
-                    Component = window[key];
-                    break;
+                    candidates.push(window[key]);
                   }
                 }
-              }
-              
-              if (Component) {
-                const root = ReactDOM.createRoot(document.getElementById('root'));
-                root.render(React.createElement(Component));
-              } else {
-                document.getElementById('root').innerHTML = '<div style="padding: 20px; color: red;">Error: No component found</div>';
+
+                const Component = candidates.find(Boolean);
+
+                if (Component) {
+                  const root = ReactDOM.createRoot(document.getElementById('root'));
+                  root.render(React.createElement(Component));
+                } else {
+                  document.getElementById('root').innerHTML = '<div style="padding: 20px; color: red;">Error: No component found</div>';
+                  window.parent.postMessage({
+                    type: 'CONSOLE_ERROR',
+                    message: 'No React component found in generated code'
+                  }, '*');
+                }
+              } catch (error) {
                 window.parent.postMessage({
                   type: 'CONSOLE_ERROR',
-                  message: 'No React component found in generated code'
+                  message: error?.message || String(error)
                 }, '*');
               }
             </script>
